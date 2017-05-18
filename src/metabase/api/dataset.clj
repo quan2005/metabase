@@ -12,6 +12,7 @@
             [metabase.api.common :as api]
             [metabase.api.common.internal :refer [route-fn-name]]
             [metabase.models
+             [card :refer [Card]]
              [database :refer [Database]]
              [query :as query]]
             [metabase.query-processor.util :as qputil]
@@ -32,13 +33,43 @@
   {:max-results           max-results
    :max-results-bare-rows max-results-bare-rows})
 
-(api/defendpoint POST "/"
-  "Execute a query and retrieve the results in the usual format."
-  [:as {{:keys [database] :as body} :body}]
+;; TODO - HACK - This is super hacky, but for the time being until frontend changes are made the Saved Questions virtual database
+;; is the DB with ID of -1. This should be cleaned up so we're not using a magic number before merging but for proof-of-concept purposes
+;; this should work for now.
+(defn- is-nested-query? [query]
+  (= (:database query) -1))
+
+(defn- execute-nested-query
+  "For a QUERY that uses a saved Card as its source, check permissions as appropriate and add the approprate `:source-query` clause."
+  [{query :query, :as outer-query}]
+  (let [query           (qputil/normalize-keys query)
+        [_ card-id-str] (re-matches #"^card__(\d+$)" (or (:source-table query)
+                                                         (throw (Exception. "Missing :source_table in query."))))]
+    (when-not card-id-str
+      (throw (Exception. (str "Invalid source query ID. Expected a string like 'card__100'. Got: " card-id-str))))
+    (let [card-id    (Integer/parseInt card-id-str)
+          card       (api/read-check Card (Integer/parseInt card-id-str))
+          card-query (:dataset_query card)]
+      (qp/dataset-query (assoc outer-query
+                          :constraints default-query-constraints
+                          :database    (:database card-query)
+                          :query       (-> query
+                                           (assoc :source-query (:query card-query))
+                                           (dissoc :source-table)))
+        {:executed-by api/*current-user-id*, :context :ad-hoc, :card-id card-id, :nested-query? true}))))
+
+(defn- execute-query [{:keys [database], :as query}]
   (api/read-check Database database)
   ;; add sensible constraints for results limits on our query
-  (let [query (assoc body :constraints default-query-constraints)]
-    (qp/dataset-query query {:executed-by api/*current-user-id*, :context :ad-hoc})))
+  (qp/dataset-query (assoc query :constraints default-query-constraints)
+    {:executed-by api/*current-user-id*, :context :ad-hoc}))
+
+(api/defendpoint POST "/"
+  "Execute a query and retrieve the results in the usual format."
+  [:as {body :body}]
+  (if (is-nested-query? body)
+    (execute-nested-query body)
+    (execute-query body)))
 
 ;; TODO - this is no longer used. Should we remove it?
 (api/defendpoint POST "/duration"

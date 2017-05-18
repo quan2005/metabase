@@ -3,7 +3,10 @@
   (:require [buddy.core
              [codecs :as codecs]
              [hash :as hash]]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [clojure.string :as str]
+            [metabase.util.schema :as su]
+            [schema.core :as s]))
 
 (defn mbql-query?
   "Is the given query an MBQL query?"
@@ -15,6 +18,29 @@
   [{:keys [base-type special-type]}]
   (or (isa? base-type :type/DateTime)
       (isa? special-type :type/DateTime)))
+
+;; TODO - Not sure whether I like moving this here or whether it should go back to `metabase.query-processor.expand`. It does seem
+;; like it has more to do with query expansion than anything else
+(s/defn ^:always-validate normalize-token :- s/Keyword
+  "Convert a string or keyword in various cases (`lisp-case`, `snake_case`, or `SCREAMING_SNAKE_CASE`) to a lisp-cased keyword."
+  [token :- su/KeywordOrString]
+  (-> (name token)
+      str/lower-case
+      (str/replace #"_" "-")
+      keyword))
+
+(defn normalize-keys
+  "Normalize the keys in M into the usual MBQL lisp-case keyword format. Since MBQL itself accepts keys
+   regardless of whether they're a string/keyword, lowercase/uppercase, or lisp-case/snake_case, this function
+   facilitates various map operations on a raw MBQL query.
+
+     (normalize-keys {\"NUM_TOUCANS\" 2, :total_birds 3}) ; -> {:num-toucans 2, :total-birds 3}
+
+   This function DOES NOT normalize nested maps. If we end up needing that functionality, consider reworking
+   this function to use `clojure.walk` or adding an additional function to do so."
+  [m]
+  (into (empty m) (for [[k v] m]
+                    {(normalize-token k) v})))
 
 (defn query-without-aggregations-or-limits?
   "Is the given query an MBQL query without a `:limit`, `:aggregation`, or `:page` clause?"

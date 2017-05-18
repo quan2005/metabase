@@ -2,11 +2,13 @@
   "/api/table endpoints."
   (:require [clojure.tools.logging :as log]
             [compojure.core :refer [GET PUT]]
+            [medley.core :as m]
             [metabase
              [sync-database :as sync-database]
              [util :as u]]
             [metabase.api.common :as api]
             [metabase.models
+             [card :refer [Card]]
              [field :refer [Field]]
              [interface :as mi]
              [table :as table :refer [Table]]]
@@ -87,12 +89,30 @@
   {include_sensitive_fields (s/maybe su/BooleanString)}
   (-> (api/read-check Table id)
       (hydrate :db [:fields :target] :field_values :segments :metrics)
+      (m/dissoc-in [:db :details])
       (update-in [:fields] (if (Boolean/parseBoolean include_sensitive_fields)
                              ;; If someone passes include_sensitive_fields return hydrated :fields as-is
                              identity
                              ;; Otherwise filter out all :sensitive fields
                              (partial filter (fn [{:keys [visibility_type]}]
                                                (not= (keyword visibility_type) :sensitive)))))))
+
+(api/defendpoint GET "/card__:id/query_metadata"
+  "Return metadata for the 'virtual' table for a Card."
+  [id]
+  (let [{metadata :result_metadata, card-name :name} (api/read-check (db/select-one [Card :dataset_query :result_metadata :name], :id id))]
+    {:display_name card-name
+     :db_id        -1
+     :id           (str "card__" id)
+     :fields       (for [col metadata]
+                     (assoc col
+                       :table_id (str "card__" id)
+                       :id       [:field-literal (:name col) (:base_type col)]))}))
+
+(api/defendpoint GET "/card__:id/fks"
+  "Return FK info for the 'virtual' table for a Card. This is always empty, so this endpoint
+   serves mainly as a placeholder to avoid having to change anything on the frontend."
+  [])
 
 
 (api/defendpoint GET "/:id/fks"

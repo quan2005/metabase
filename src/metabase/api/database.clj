@@ -11,6 +11,7 @@
              [util :as u]]
             [metabase.api.common :as api]
             [metabase.models
+             [card :refer [Card]]
              [database :as database :refer [Database protected-password]]
              [field :refer [Field]]
              [interface :as mi]
@@ -47,16 +48,54 @@
                                       (user-has-perms? perms/native-read-path)      :read
                                       :else                                         :none)))))
 
-(defn- dbs-list [include-tables?]
+;; TODO - we also need to filter out Cards whose database doesn't support nested queries. (I think we need to add a new `feature` for this)
+(defn- cards-virtual-tables
+  "Return a sequence of 'virtual' Table metadata for elligible Cards."
+  []
+  (for [card (as-> (db/select [Card :name :description :dataset_query :id :collection_id]
+                     :result_metadata [:not= nil]
+                     {:order_by [:%lower.name :asc]}) <>
+               (filter mi/can-read? <>)
+               (hydrate  <> :collection))]
+    {:id           (str "card__" (:id card))
+     :db_id        -1
+     :display_name (:name card)
+     :schema       (get-in card [:collection :name] "All questions")
+     :description  (:description card)}))
+
+;; "Virtual" tables for saved cards simulate the db->schema->table hierarchy by doing fake-db->collection->card
+(defn- add-virtual-tables-for-saved-cards [dbs]
+  (let [virtual-tables (cards-virtual-tables)]
+    ;; only add the 'Saved Questions' DB if there are Cards that can be used
+    (if-not (seq virtual-tables)
+      dbs
+      (conj (vec dbs)
+            {:name     "Saved Questions"
+             ;; TODO - this is a bit hacky but the frontend doesn't work properly if there's not an integer ID defined.
+             ;; We should make some frontend changes to let us skip trying to read the ID for the Cards "virtual" database
+             :id       -1
+             ;; TODO - how do we determine which features are supported by these virtual tables? It sounds like it's dependent on
+             ;; database backing each "table" (Card). This presents a problem since the frontend assumes every table for a database
+             ;; supports the same feature set.
+             ;; For now, just return `:basic-aggregations` so we can test out the feature.
+             :features #{:basic-aggregations}
+             ;; TODO - Do we need this? If so, get the correct value
+             :engine   :postgres
+             :tables   (cards-virtual-tables)}))))
+
+(defn- dbs-list [include-tables? include-cards?]
   (when-let [dbs (seq (filter mi/can-read? (db/select Database {:order-by [:%lower.name]})))]
-    (add-native-perms-info (if-not include-tables?
-                             dbs
-                             (add-tables dbs)))))
+    (cond-> (add-native-perms-info dbs)
+      include-tables? add-tables
+      include-cards?  add-virtual-tables-for-saved-cards)))
 
 (api/defendpoint GET "/"
   "Fetch all `Databases`."
-  [include_tables]
-  (or (dbs-list include_tables)
+  [include_tables include_cards]
+  {include_tables (s/maybe su/BooleanString)
+   include_cards  (s/maybe su/BooleanString)}
+  ;; TODO - The frontend needs to be tweaked to pass `?include_cards=true` because we don't want to be returning them all the time by default
+  (or (dbs-list include_tables true #_include_cards)
       []))
 
 

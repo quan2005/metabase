@@ -157,6 +157,7 @@
                                        :display                :keyword
                                        :embedding_params       :json
                                        :query_type             :keyword
+                                       :result_metadata        :json
                                        :visualization_settings :json})
           :properties     (constantly {:timestamped? true})
           :pre-update     (comp populate-query-fields pre-update)

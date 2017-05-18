@@ -177,16 +177,24 @@
                                datetime-unit :- (s/maybe (apply s/enum datetime-field-units))])
 
 (s/defrecord AgFieldRef [index :- s/Int])
-
 ;; TODO - add a method to get matching expression from the query?
 
+
+;; TODO - This should probably only allow field aliases, i.e. ones without any path components (e.g. no `table.field`-style values).
+;; TODO - If we extend permissions to allow per-field perms, how do we check this? :/
+;; TODO - Do we even need the FieldType?
+(s/defrecord FieldLiteral [field-name :- su/NonBlankString
+                           base-type  :- su/FieldType]
+  clojure.lang.Named
+  (getName [_] field-name))
+
 (def FieldPlaceholderOrAgRef
-  "Schema for either a `FieldPlaceholder` or `AgFieldRef`."
-  (s/named (s/cond-pre FieldPlaceholder AgFieldRef) "Valid field (not a field ID or aggregate field reference)"))
+  "Schema for either a `FieldPlaceholder`, `FieldLiteral`, or `AgFieldRef`."
+  (s/named (s/cond-pre FieldPlaceholder AgFieldRef FieldLiteral) "Valid field (not a field ID, literal, or aggregate field reference)"))
 
 (def FieldPlaceholderOrExpressionRef
-  "Schema for either a `FieldPlaceholder` or `ExpressionRef`."
-  (s/named (s/cond-pre FieldPlaceholder ExpressionRef)
+  "Schema for either a `FieldPlaceholder`, `FieldLiteral`, or `ExpressionRef`."
+  (s/named (s/cond-pre FieldPlaceholder ExpressionRef FieldLiteral)
            "Valid field or expression reference."))
 
 
@@ -203,10 +211,11 @@
                                                     (s/recursive #'Aggregation))]
                          custom-name :- (s/maybe su/NonBlankString)])
 
+
 (def AnyFieldOrExpression
   "Schema for a `FieldPlaceholder`, `AgRef`, or `Expression`."
-  (s/named (s/cond-pre ExpressionRef Expression FieldPlaceholderOrAgRef)
-           "Valid field, ag field reference, expression, or expression reference."))
+  (s/named (s/cond-pre ExpressionRef Expression FieldPlaceholderOrAgRef FieldLiteral)
+           "Valid field, ag field reference, expression, expression reference, or field literal."))
 
 
 (def LiteralDatetimeString
@@ -333,14 +342,32 @@
             :items su/IntGreaterThanZero}
            "Valid page clause"))
 
+(declare Query)
+
+(def SourceQuery
+  "Schema for a valid value for a `:source-query` clause."
+  (s/if :native
+    {:native s/Any}     ; TODO - what about native params (is that applicable?)
+    (s/recursive #'Query)))
+
 (def Query
   "Schema for an MBQL query."
-  {(s/optional-key :aggregation) [Aggregation]
-   (s/optional-key :breakout)    [FieldPlaceholderOrExpressionRef]
-   (s/optional-key :fields)      [AnyFieldOrExpression]
-   (s/optional-key :filter)      Filter
-   (s/optional-key :limit)       su/IntGreaterThanZero
-   (s/optional-key :order-by)    [OrderBy]
-   (s/optional-key :page)        Page
-   (s/optional-key :expressions) {s/Keyword Expression}
-   :source-table                 su/IntGreaterThanZero})
+  (s/constrained
+   {(s/optional-key :aggregation)  [Aggregation]
+    (s/optional-key :breakout)     [FieldPlaceholderOrExpressionRef]
+    (s/optional-key :fields)       [AnyFieldOrExpression]
+    (s/optional-key :filter)       Filter
+    (s/optional-key :limit)        su/IntGreaterThanZero
+    (s/optional-key :order-by)     [OrderBy]
+    (s/optional-key :page)         Page
+    (s/optional-key :expressions)  {s/Keyword Expression}
+    (s/optional-key :source-table) su/IntGreaterThanZero
+    (s/optional-key :source-query) SourceQuery}
+   (fn [{:keys [source-table source-query native-source-query]}]
+     (and (or source-table
+              source-query
+              native-source-query)
+          (not (and source-table
+                    source-query
+                    native-source-query))))
+   "Query must specify either `:source-table` or `:source-query`, but not both."))
