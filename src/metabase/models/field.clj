@@ -99,7 +99,8 @@
   [fields]
   (let [field-ids        (set (map :id fields))
         id->field-values (u/key-by :field_id (when (seq field-ids)
-                                               (db/select FieldValues :field_id [:in field-ids])))]
+                                               (db/select [FieldValues :id :human_readable_values :values :field_id]
+                                                 :field_id [:in field-ids])))]
     (for [field fields]
       (assoc field :values (get id->field-values (:id field) [])))))
 

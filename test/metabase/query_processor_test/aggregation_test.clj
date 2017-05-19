@@ -70,7 +70,7 @@
                    [ 9 "Krua Siri"                    71 34.1018 -118.301 1]
                    [10 "Fred 62"                      20 34.1046 -118.292 2]]
      :columns     (venues-columns)
-     :cols        (venues-cols)
+     :cols        (values-nil (venues-cols))
      :native_form true}
     (->> (data/run-query venues
            (ql/limit 10)

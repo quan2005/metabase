@@ -129,7 +129,6 @@
       [original-val
        (db/select-one-field :fk_target_field_id Field, :id field-id)])))
 
-
 ;; check that you *can* set it if it *is* the proper base type
 (expect
   :type/UNIXTimestampSeconds
@@ -137,25 +136,13 @@
     ((user->client :crowberto) :put 200 (str "field/" field-id) {:special_type :type/UNIXTimestampSeconds})
     (db/select-one-field :special_type Field, :id field-id)))
 
-
-(defn- field->field-values
-  "Fetch the `FieldValues` object that corresponds to a given `Field`."
-  [table-kw field-kw]
-  (FieldValues :field_id (id table-kw field-kw)))
-
-(defn- field-values-id [table-key field-key]
-  (:id (field->field-values table-key field-key)))
-
 ;; ## GET /api/field/:id/values
 ;; Should return something useful for a field that has special_type :type/Category
 (expect
-  {:field_id              (id :venues :price)
-   :human_readable_values {}
-   :values                [1 2 3 4]
-   :id                    (field-values-id :venues :price)}
+  (values-map :venues :price [1 2 3 4])
   (do
     ;; clear out existing human_readable_values in case they're set
-    (db/update! FieldValues (field-values-id :venues :price)
+    (db/update! FieldValues (field-values-id (id :venues :price))
       :human_readable_values nil)
     ;; now update the values via the API
     (-> ((user->client :rasta) :get 200 (format "field/%d/values" (id :venues :price)))
@@ -179,7 +166,7 @@
                             :3 "$$$"
                             :4 "$$$$"}
     :values                [1 2 3 4]
-    :id                    (field-values-id :venues :price)}]
+    :id                    (field-values-id (id :venues :price))}]
   [((user->client :crowberto) :post 200 (format "field/%d/value_map_update" (id :venues :price)) {:values_map {:1 "$"
                                                                                                                :2 "$$"
                                                                                                                :3 "$$$"
@@ -190,12 +177,8 @@
 ;; Check that we can unset values
 (expect
   [{:status "success"}
-   (tu/match-$ (FieldValues :field_id (id :venues :price))
-     {:field_id              (id :venues :price)
-      :human_readable_values {}
-      :values                [1 2 3 4]
-      :id                    (field-values-id :venues :price)})]
-  [(do (db/update! FieldValues (:id (field->field-values :venues :price))
+   (values-map :venues :price [1 2 3 4])]
+  [(do (db/update! FieldValues (field-values-id (id :venues :price))
          :human_readable_values {:1 "$" ; make sure they're set
                                  :2 "$$"
                                  :3 "$$$"

@@ -15,14 +15,14 @@
       :data :cols set))
 
 (expect-with-non-timeseries-dbs
-  [(set (venues-cols))
-   #{(venues-col :category_id)
-     (venues-col :name)
-     (venues-col :latitude)
-     (venues-col :id)
-     (venues-col :longitude)
-     (assoc (venues-col :price) :visibility_type :details-only)}
-   (set (venues-cols))]
+  [(set (values-nil (venues-cols)))
+   (set (values-nil [(venues-col :category_id)
+                     (venues-col :name)
+                     (venues-col :latitude)
+                     (venues-col :id)
+                     (venues-col :longitude)
+                     (assoc (venues-col :price) :visibility_type :details-only)]))
+   (set (values-nil (venues-cols)))]
   [(get-col-names)
    (do (db/update! Field (data/id :venues :price), :visibility_type :details-only)
        (get-col-names))
@@ -34,9 +34,9 @@
 ;;; Make sure :sensitive information fields are never returned by the QP
 (qp-expect-with-all-engines
   {:columns     (->columns "id" "name" "last_login")
-   :cols        [(users-col :id)
-                 (users-col :name)
-                 (users-col :last_login)],
+   :cols        (values-nil [(users-col :id)
+                             (users-col :name)
+                             (users-col :last_login)]),
    :rows        [[ 1 "Plato Yeshua"]
                  [ 2 "Felipinho Asklepios"]
                  [ 3 "Kaneonuskatew Eiran"]

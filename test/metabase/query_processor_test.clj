@@ -7,8 +7,10 @@
             [metabase
              [driver :as driver]
              [util :as u]]
+            [medley.core :as m]
             [metabase.test.data :as data]
-            [metabase.test.data.datasets :as datasets]))
+            [metabase.test.data.datasets :as datasets]
+            [metabase.test.data.dataset-definitions :as datadefs]))
 
 ;; make sure all the driver test extension namespaces are loaded <3
 ;; if this isn't done some things will get loaded at the wrong time which can end up causing test databases to be created more than once, which fails
@@ -125,22 +127,58 @@
      :id         {:special_type :type/PK
                   :base_type    (data/id-field-type)
                   :name         (data/format-name "id")
-                  :display_name "ID"}
+                  :display_name "ID"
+                  :values       []}
      :name       {:special_type :type/Name
                   :base_type    (data/expected-base-type->actual :type/Text)
                   :name         (data/format-name "name")
-                  :display_name "Name"}
+                  :display_name "Name"
+                  :values       (data/values-map :users :name
+                                                 ["Broen Olujimi"
+                                                  "Conchúr Tihomir"
+                                                  "Dwight Gresham"
+                                                  "Felipinho Asklepios"
+                                                  "Frans Hevel"
+                                                  "Kaneonuskatew Eiran"
+                                                  "Kfir Caj"
+                                                  "Nils Gotam"
+                                                  "Plato Yeshua"
+                                                  "Quentin Sören"
+                                                  "Rüstem Hebel"
+                                                  "Shad Ferdynand"
+                                                  "Simcha Yan"
+                                                  "Spiros Teofil"
+                                                  "Szymon Theutrich"])}
      :last_login {:special_type nil
                   :base_type    (data/expected-base-type->actual :type/DateTime)
                   :name         (data/format-name "last_login")
                   :display_name "Last Login"
-                  :unit         :default})))
+                  :unit         :default
+                  :values       []})))
 
 ;; #### venues
 (defn venues-columns
   "Names of all columns for the `venues` table."
   []
   (->columns "id" "name" "category_id" "latitude" "longitude" "price"))
+
+(defn venue-name-values []
+  (data/values-map :venues :name
+                   (->> datadefs/test-data
+                        :table-definitions
+                        (m/find-first #(= "venues" (:table-name %)))
+                        :rows
+                        (map first)
+                        sort)))
+
+(defn venue-category-values []
+  (data/values-map :categories :name
+                   (->> datadefs/test-data
+                        :table-definitions
+                        (m/find-first #(= "categories" (:table-name %)))
+                        :rows
+                        (map first)
+                        sort)))
 
 (defn venues-col
   "Return column information for the `venues` column named by keyword COL."
@@ -153,7 +191,8 @@
      :id          {:special_type :type/PK
                    :base_type    (data/id-field-type)
                    :name         (data/format-name "id")
-                   :display_name "ID"}
+                   :display_name "ID"
+                   :values       []}
      :category_id {:extra_info   (if (data/fks-supported?)
                                    {:target_table_id (data/id :categories)}
                                    {})
@@ -163,28 +202,36 @@
                                    :type/Category)
                    :base_type    (data/expected-base-type->actual :type/Integer)
                    :name         (data/format-name "category_id")
-                   :display_name "Category ID"}
+                   :display_name "Category ID"
+                   :values       []}
      :price       {:special_type :type/Category
                    :base_type    (data/expected-base-type->actual :type/Integer)
                    :name         (data/format-name "price")
-                   :display_name "Price"}
+                   :display_name "Price"
+                   :values       (data/values-map :venues :price [1 2 3 4])}
      :longitude   {:special_type :type/Longitude
                    :base_type    (data/expected-base-type->actual :type/Float)
                    :name         (data/format-name "longitude")
-                   :display_name "Longitude"}
+                   :display_name "Longitude"
+                   :values       []}
      :latitude    {:special_type :type/Latitude
                    :base_type    (data/expected-base-type->actual :type/Float)
                    :name         (data/format-name "latitude")
-                   :display_name "Latitude"}
+                   :display_name "Latitude"
+                   :values       []}
      :name        {:special_type :type/Name
                    :base_type    (data/expected-base-type->actual :type/Text)
                    :name         (data/format-name "name")
-                   :display_name "Name"})))
+                   :display_name "Name"
+                   :values       (venue-name-values)})))
 
 (defn venues-cols
   "`cols` information for all the columns in `venues`."
   []
   (mapv venues-col [:id :name :category_id :latitude :longitude :price]))
+
+(defn values-nil [field-seq]
+  (map #(assoc % :values nil) field-seq))
 
 ;; #### checkins
 (defn checkins-col
@@ -202,22 +249,24 @@
      :venue_id {:extra_info   (if (data/fks-supported?)
                                 {:target_table_id (data/id :venues)}
                                 {})
-                :target       (target-field (venues-col :id))
+                :target       (target-field (dissoc (venues-col :id) :values))
                 :special_type (if (data/fks-supported?)
                                 :type/FK
                                 :type/Category)
                 :base_type    (data/expected-base-type->actual :type/Integer)
                 :name         (data/format-name "venue_id")
-                :display_name "Venue ID"}
+                :display_name "Venue ID"
+                :values       []}
      :user_id  {:extra_info   (if (data/fks-supported?) {:target_table_id (data/id :users)}
                                   {})
-                :target       (target-field (users-col :id))
+                :target       (target-field (dissoc (users-col :id) :values))
                 :special_type (if (data/fks-supported?)
                                 :type/FK
                                 :type/Category)
                 :base_type    (data/expected-base-type->actual :type/Integer)
                 :name         (data/format-name "user_id")
-                :display_name "User ID"})))
+                :display_name "User ID"
+                :values       []})))
 
 
 ;;; #### aggregate columns

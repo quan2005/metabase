@@ -13,6 +13,7 @@
             [metabase.models
              [database :refer [Database]]
              [field :as field :refer [Field]]
+             [field-values :refer [FieldValues]]
              [table :refer [Table]]]
             [metabase.query-processor
              [expand :as ql]
@@ -139,6 +140,12 @@
                                    table-id
                                    (u/pprint-to-str (db/select-id->field :name Field, :active true, :table_id table-id))))))))
 
+(defn- get-field-values-id-or-explode [field-id]
+  (or (db/select-one-id FieldValues :field_id field-id)
+      (throw (Exception. (format "Couldn't find FieldValues for field id: '%s'. Found: %s"
+                                 field-id
+                                 (u/pprint-to-str (db/select-id->field :name FieldValues)))))))
+
 (defn id
   "Get the ID of the current database or one of its `Tables` or `Fields`.
    Relies on the dynamic variable `*get-db`, which can be rebound with `with-db`."
@@ -155,6 +162,19 @@
        (if-not nested-field-name
          parent-id
          (recur (get-field-id-or-explode table-id nested-field-name, :parent-id parent-id) more))))))
+
+(defn field-values-id
+  "Get the ID of the current database or one of its `Tables` or `Fields`.
+   Relies on the dynamic variable `*get-db`, which can be rebound with `with-db`."
+  ([field-id]
+   (get-field-values-id-or-explode field-id)))
+
+(defn values-map [table-kwd field-kwd values]
+  (let [field-id (id table-kwd field-kwd)]
+    {:id                    (field-values-id field-id)
+     :field_id              field-id
+     :values                values
+     :human_readable_values {}}))
 
 (defn fks-supported?
   "Does the current engine support foreign keys?"
