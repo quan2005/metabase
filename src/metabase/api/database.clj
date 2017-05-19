@@ -94,8 +94,7 @@
   [include_tables include_cards]
   {include_tables (s/maybe su/BooleanString)
    include_cards  (s/maybe su/BooleanString)}
-  ;; TODO - The frontend needs to be tweaked to pass `?include_cards=true` because we don't want to be returning them all the time by default
-  (or (dbs-list include_tables true #_include_cards)
+  (or (dbs-list include_tables include_cards)
       []))
 
 
@@ -284,6 +283,7 @@
   (api/check-superuser)
   (sample-data/add-sample-dataset!)
   (Database :is_sample true))
+
 
 ;;; ------------------------------------------------------------ PUT /api/database/:id ------------------------------------------------------------
 
