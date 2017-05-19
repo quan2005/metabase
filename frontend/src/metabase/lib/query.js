@@ -331,6 +331,10 @@ var Query = {
         return Array.isArray(field) && mbqlEq(field[0], "aggregation");
     },
 
+    isFieldLiteral(field) {
+        return Array.isArray(field) && field.length === 3 && mbqlEq(field[0], "field-literal");
+    },
+
     isValidField(field) {
         return (
             (Query.isRegularField(field)) ||
@@ -363,6 +367,8 @@ var Query = {
             return Query.getFieldTargetId(field[2]);
         } else if (Query.isDatetimeField(field)) {
             return Query.getFieldTargetId(field[1]);
+        } else if (Query.isFieldLiteral(field)) {
+            return field;
         }
         console.warn("Unknown field type: ", field);
     },
@@ -406,7 +412,9 @@ var Query = {
                 table: tableDef,
                 field: fieldDef,
                 path: path
-            }
+            };
+        } else if (Query.isFieldLiteral(field)) {
+            return { table: tableDef, field: Table.getField(tableDef, field), path }; // just pretend it's a normal field
         }
 
         console.warn("Unknown field type: ", field);
