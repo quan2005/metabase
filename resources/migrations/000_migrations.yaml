@@ -3646,3 +3646,51 @@ databaseChangeLog:
             columns:
               - column:
                   name: dashboard_id
+  - changeSet:
+      id: 56
+      author: senior
+      changes:
+        - createTable:
+            tableName: metabase_dimensions
+            remarks: ''
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: field_id
+                  type: int
+                  constraints:
+                    deferrable: false
+                    foreignKeyName: fk_dimension_ref_field_id
+                    initiallyDeferred: false
+                    nullable: false
+                    references: metabase_field(id)
+              - column:
+                  name: name
+                  type: VARCHAR(254)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(254)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: human_readable_field_id
+                  type: int
+                  constraints:
+                    nullable: true
+                    deferrable: false
+                    foreignKeyName: fk_dimension_displayfk_ref_field_id
+                    initiallyDeferred: false
+                    nullable: true
+                    references: metabase_field(id)
+        - addUniqueConstraint:
+            tableName: metabase_dimensions
+            columnNames: field_id, name
+            constraintName: unique_dimension_field_id_name

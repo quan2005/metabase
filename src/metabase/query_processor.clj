@@ -8,6 +8,7 @@
              [query :as query]
              [query-execution :as query-execution :refer [QueryExecution]]]
             [metabase.query-processor.middleware
+             [add-dimension-projections :as add-proj]
              [add-implicit-clauses :as implicit-clauses]
              [add-row-count-and-status :as row-count-and-status]
              [add-settings :as add-settings]
@@ -83,6 +84,7 @@
        expand-macros/expand-macros
        driver-specific/process-query-in-context      ; (drivers can inject custom middleware if they implement IDriver's `process-query-in-context`)
        add-settings/add-settings
+       add-proj/add-inline-remaps
        resolve-driver/resolve-driver                 ; ▲▲▲ DRIVER RESOLUTION POINT ▲▲▲ All functions *above* will have access to the driver during PRE- *and* POST-PROCESSING
        log-query/log-initial-query
        cache/maybe-return-cached-results
