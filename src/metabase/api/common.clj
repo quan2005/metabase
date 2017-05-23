@@ -319,13 +319,3 @@
   (u/prog1 object
     (check (not (:archived object))
       [404 "The object has been archived."])))
-
-;; This macro is only enabled for dev because we don't want people accidentally using it in production code.
-(when config/is-dev?
-  (defmacro with-superuser-permissions
-    "Run BODY with full superuser permissions.
-     INTENDED FOR DEBUGGING USE ONLY. Don't use this in production code."
-    {:style/indent 0}
-    [& body]
-    `(binding [*current-user-permissions-set* (atom #{"/"})]
-       ~@body)))
