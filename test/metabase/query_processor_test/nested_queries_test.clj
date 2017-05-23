@@ -65,10 +65,6 @@
 
 ;; -> SELECT "price" AS "price" FROM (SELECT * FROM "public"."venues" LIMIT 10) "source" GROUP BY "price" ORDER BY "price" ASC LIMIT 5
 
-(expect
-  [100]
-  (x))
-
 ;; TODO - type information not coming back correctly !
 ;; TODO - need to get query permissions from the nested query as well as the outer query
 ;; TODO - If a nested query is a native query we need to check for *native* query permissions as well
