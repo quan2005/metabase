@@ -47,14 +47,18 @@
                                                          (throw (Exception. "Missing :source_table in query."))))]
     (when-not card-id-str
       (throw (Exception. (str "Invalid source query ID. Expected a string like 'card__100'. Got: " card-id-str))))
-    (let [card-id    (Integer/parseInt card-id-str)
-          card       (api/read-check Card (Integer/parseInt card-id-str))
-          card-query (:dataset_query card)]
+    (let [card-id      (Integer/parseInt card-id-str)
+          card         (api/read-check Card (Integer/parseInt card-id-str))
+          card-query   (:dataset_query card)
+          source-query (or (:query card-query)
+                           (when-let [native-query (get-in card-query [:native :query])]
+                             {:native native-query})
+                           (throw (Exception. (str "Missing source query in Card " card-id))))]
       (qp/dataset-query (assoc outer-query
                           :constraints default-query-constraints
                           :database    (:database card-query)
                           :query       (-> query
-                                           (assoc :source-query (:query card-query))
+                                           (assoc :source-query source-query)
                                            (dissoc :source-table)))
         {:executed-by api/*current-user-id*, :context :ad-hoc, :card-id card-id, :nested-query? true}))))
 

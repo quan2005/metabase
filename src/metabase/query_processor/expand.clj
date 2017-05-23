@@ -392,9 +392,11 @@
 
      (source-query {} (-> (source-table {} 100)
                           (limit 10)))"
-  {:added "0.24.0"}
+  {:added "0.25.0"}
   [query, source-query :- su/Map]
-  (assoc query :source-query (expand-inner source-query)))
+  (assoc query :source-query (if (:native source-query)
+                               source-query
+                               (expand-inner source-query))))
 
 
 ;;; ## calculated columns
