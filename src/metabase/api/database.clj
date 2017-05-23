@@ -48,15 +48,23 @@
                                       (user-has-perms? perms/native-read-path)      :read
                                       :else                                         :none)))))
 
+(defn- source-query-cards
+  "Fetch the Cards that can be used as source queries (e.g. presented as virtual tables)."
+  []
+  (as-> (db/select [Card :name :description :database_id :dataset_query :id :collection_id]
+          :result_metadata [:not= nil]
+          {:order_by [:%lower.name :asc]}) <>
+    (filter :database_id <>)
+    (filter #(driver/driver-supports? (driver/database-id->driver (:database_id %)) :nested-queries) <>)
+    (filter mi/can-read? <>)
+    (hydrate  <> :collection)))
+
 ;; TODO - we also need to filter out Cards whose database doesn't support nested queries. (I think we need to add a new `feature` for this)
 (defn- cards-virtual-tables
-  "Return a sequence of 'virtual' Table metadata for elligible Cards."
+  "Return a sequence of 'virtual' Table metadata for eligible Cards.
+   (This takes the Cards from `source-query-cards` and returns them in a format suitable for consumption by the Query Builder.)"
   []
-  (for [card (as-> (db/select [Card :name :description :dataset_query :id :collection_id]
-                     :result_metadata [:not= nil]
-                     {:order_by [:%lower.name :asc]}) <>
-               (filter mi/can-read? <>)
-               (hydrate  <> :collection))]
+  (for [card (source-query-cards)]
     {:id           (str "card__" (:id card))
      :db_id        -1
      :display_name (:name card)
