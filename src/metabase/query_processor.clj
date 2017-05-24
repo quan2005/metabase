@@ -76,6 +76,7 @@
        dev/check-results-format
        limit/limit
        cumulative-ags/handle-cumulative-aggregations
+       add-proj/add-inline-remaps
        implicit-clauses/add-implicit-clauses
        format-rows/format-rows
        expand-resolve/expand-resolve                 ; ▲▲▲ QUERY EXPANSION POINT  ▲▲▲ All functions *above* will see EXPANDED query during PRE-PROCESSING
@@ -84,7 +85,6 @@
        expand-macros/expand-macros
        driver-specific/process-query-in-context      ; (drivers can inject custom middleware if they implement IDriver's `process-query-in-context`)
        add-settings/add-settings
-       add-proj/add-inline-remaps
        resolve-driver/resolve-driver                 ; ▲▲▲ DRIVER RESOLUTION POINT ▲▲▲ All functions *above* will have access to the driver during PRE- *and* POST-PROCESSING
        log-query/log-initial-query
        cache/maybe-return-cached-results

@@ -18,9 +18,9 @@
 
 (defn row-map-fn [dim-seq]
   (fn [row]
-    (concat row (map (fn [{:keys [col-index xform-map]}]
-                       (xform-map (nth row col-index)))
-                     dim-seq))))
+    (into row (map (fn [{:keys [col-index xform-fn]}]
+                     (xform-fn (get row col-index)))
+                   dim-seq))))
 
 (defn add-inline-remaps
   [qp]
@@ -30,13 +30,12 @@
                                        (when (seq (:dimensions col))
                                          {:col-index idx
                                           :name (get-in col [:dimensions :name])
-                                          :xform-map (zipmap (get-in col [:values :values])
-                                                             (get-in col [:values :human_readable_values]))
+                                          :xform-fn (zipmap (get-in col [:values :values])
+                                                            (get-in col [:values :human_readable_values]))
                                           :new-column (create-expression-col (get-in col [:dimensions :name]))}))
-                                     (with-values (with-dimensions (filter :id (get-in results [:data :cols])))))
+                                     (:cols results))
           remap-fn (row-map-fn indexed-dims)]
-
       (-> results
-          (update-in [:data :columns] into (map :name indexed-dims))
-          (update-in [:data :cols] into (map :new-column indexed-dims))
-          (update-in [:data :rows] #(map remap-fn %))))))
+          (update :columns into (map :name indexed-dims))
+          (update :cols into (map :new-column indexed-dims))
+          (update :rows #(map remap-fn %))))))

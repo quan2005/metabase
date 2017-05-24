@@ -6,17 +6,21 @@
              [interface :as i]
              [resolve :as resolve]
              [util :as qputil]]
-            [toucan.db :as db]))
+            [toucan
+             [db :as db]
+             [hydrate :refer [hydrate]]]))
 
 (defn- fields-for-source-table
   "Return the all fields for SOURCE-TABLE, for use as an implicit `:fields` clause."
   [{source-table-id :id, :as source-table}]
-  (for [field (db/select [Field :name :display_name :base_type :special_type :visibility_type :table_id :id :position :description]
-                :table_id        source-table-id
-                :visibility_type [:not-in ["sensitive" "retired"]]
-                :parent_id       nil
-                {:order-by [[:position :asc]
-                            [:id :desc]]})]
+  (for [field (-> (db/select [Field :name :display_name :base_type :special_type :visibility_type :table_id :id :position :description]
+                    :table_id        source-table-id
+                    :visibility_type [:not-in ["sensitive" "retired"]]
+                    :parent_id       nil
+                    {:order-by [[:position :asc]
+                                [:id :desc]]})
+                  (hydrate :values)
+                  (hydrate :dimensions))]
     (let [field (resolve/resolve-table (i/map->Field (resolve/rename-mb-field-keys field))
                                        {[nil source-table-id] source-table})]
       (if (qputil/datetime-field? field)
