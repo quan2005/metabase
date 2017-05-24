@@ -37,5 +37,6 @@
           remap-fn (row-map-fn indexed-dims)]
       (-> results
           (update :columns into (map :name indexed-dims))
+          (update :cols #(mapv (fn [col] (dissoc col :dimensions :values)) %))
           (update :cols into (map :new-column indexed-dims))
           (update :rows #(map remap-fn %))))))
