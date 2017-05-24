@@ -3,7 +3,6 @@
   (:require [expectations :refer :all]
             (metabase.query-processor [expand :as ql]
                                       [resolve :as resolve])
-            [metabase.query-processor-test :refer [venue-category-values]]
             [metabase.test.data :refer :all]
             [metabase.util :as u]))
 
@@ -55,8 +54,7 @@
                                                 :position           nil
                                                 :description        nil
                                                 :parent-id          nil
-                                                :parent             nil
-                                                :values             (values-map :venues :price [1 2 3 4])}
+                                                :parent             nil}
                                   :value       {:value 1
                                                 :field {:field-id           (id :venues :price)
                                                         :fk-field-id        nil
@@ -71,8 +69,7 @@
                                                         :position           nil
                                                         :description        nil
                                                         :parent-id          nil
-                                                        :parent             nil
-                                                        :values             (values-map :venues :price [1 2 3 4])}}}
+                                                        :parent             nil}}}
                    :join-tables  nil}
     :fk-field-ids #{}
     :table-ids    #{(id :venues)}}]
@@ -116,8 +113,7 @@
                                                 :position           nil
                                                 :description        nil
                                                 :parent-id          nil
-                                                :parent             nil
-                                                :values             (venue-category-values)}
+                                                :parent             nil}
                                   :value       {:value "abc"
                                                 :field {:field-id           (id :categories :name)
                                                         :fk-field-id        (id :venues :category_id)
@@ -132,8 +128,7 @@
                                                         :position           nil
                                                         :description        nil
                                                         :parent-id          nil
-                                                        :parent             nil
-                                                        :values             (venue-category-values)}}}
+                                                        :parent             nil}}}
                    :join-tables  [{:source-field {:field-id   (id :venues :category_id)
                                                   :field-name "CATEGORY_ID"}
                                    :pk-field     {:field-id   (id :categories :id)
@@ -145,8 +140,8 @@
     :fk-field-ids #{(id :venues :category_id)}
     :table-ids    #{(id :categories)}}]
   (let [expanded-form (ql/expand (wrap-inner-query (query venues
-                                                     (ql/filter (ql/= $category_id->categories.name
-                                                                      "abc")))))]
+                                                        (ql/filter (ql/= $category_id->categories.name
+                                                                         "abc")))))]
     (mapv obj->map [expanded-form
                     (resolve/resolve expanded-form)])))
 
@@ -185,8 +180,7 @@
                                                         :position           nil
                                                         :description        nil
                                                         :parent-id          nil
-                                                        :parent             nil
-                                                        :values             []}
+                                                        :parent             nil}
                                                 :unit  :year}
                                   :value       {:value (u/->Timestamp "1980-01-01")
                                                 :field {:field {:field-id           (id :users :last_login)
@@ -202,8 +196,7 @@
                                                                 :position           nil
                                                                 :description        nil
                                                                 :parent-id          nil
-                                                                :parent             nil
-                                                                :values             []}
+                                                                :parent             nil}
                                                         :unit  :year}}}
                    :join-tables  [{:source-field {:field-id   (id :checkins :user_id)
                                                   :field-name "USER_ID"}
@@ -257,8 +250,7 @@
                                                       :field-id           (id :venues :price)
                                                       :fk-field-id        (id :checkins :venue_id)
                                                       :table-name         "VENUES__via__VENUE_ID"
-                                                      :schema-name        nil
-                                                      :values             (values-map :venues :price [1 2 3 4])}}]
+                                                      :schema-name        nil}}]
                    :breakout     [{:field {:description        nil
                                            :base-type          :type/Date
                                            :parent             nil
@@ -272,8 +264,7 @@
                                            :field-id           (id :checkins :date)
                                            :fk-field-id        nil
                                            :table-name         "CHECKINS"
-                                           :schema-name        "PUBLIC"
-                                           :values             []}
+                                           :schema-name        "PUBLIC"}
                                    :unit  :day-of-week}]
                    :join-tables  [{:source-field {:field-id   (id :checkins :venue_id)
                                                   :field-name "VENUE_ID"}

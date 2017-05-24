@@ -196,8 +196,7 @@
         ;; Otherwise fetch + resolve the Fields in question
         (let [fields (->> (u/key-by :id (-> (db/select [field/Field :name :display_name :base_type :special_type :visibility_type :table_id :parent_id :description :id]
                                               :visibility_type [:not= "sensitive"]
-                                              :id [:in field-ids])
-                                            (hydrate :values)))
+                                              :id [:in field-ids])))
                           (m/map-vals rename-mb-field-keys)
                           (m/map-vals #(assoc % :parent (when-let [parent-id (:parent-id %)]
                                                           (i/map->FieldPlaceholder {:field-id parent-id})))))]
