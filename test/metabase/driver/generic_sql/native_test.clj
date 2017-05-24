@@ -11,7 +11,8 @@
          :data {:rows [[100]
                        [99]]
                 :columns ["ID"]
-                :cols [{:name "ID", :base_type :type/Integer}]
+                :cols [{:name "ID", :base_type :type/Integer
+                        :remapped_from nil, :remapped_to nil}]
                 :native_form {:query "SELECT ID FROM VENUES ORDER BY ID DESC LIMIT 2;"}}}
   (qp/process-query {:native   {:query "SELECT ID FROM VENUES ORDER BY ID DESC LIMIT 2;"}
                      :type     :native
@@ -24,9 +25,12 @@
      :data {:rows [[100 "Mohawk Bend" 46]
                    [99 "Golden Road Brewing" 10]]
             :columns ["ID" "NAME" "CATEGORY_ID"]
-            :cols [{:name "ID", :base_type :type/Integer}
-                   {:name "NAME", :base_type :type/Text}
-                   {:name "CATEGORY_ID", :base_type :type/Integer}]
+            :cols [{:name "ID", :base_type :type/Integer
+                    :remapped_from nil, :remapped_to nil}
+                   {:name "NAME", :base_type :type/Text
+                    :remapped_from nil, :remapped_to nil}
+                   {:name "CATEGORY_ID", :base_type :type/Integer
+                    :remapped_from nil, :remapped_to nil}]
             :native_form {:query "SELECT ID, NAME, CATEGORY_ID FROM VENUES ORDER BY ID DESC LIMIT 2;"}}}
   (qp/process-query {:native   {:query "SELECT ID, NAME, CATEGORY_ID FROM VENUES ORDER BY ID DESC LIMIT 2;"}
                      :type     :native

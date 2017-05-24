@@ -30,7 +30,9 @@
      :visibility_type :normal,
      :target nil,
      :display_name "ID",
-     :base_type :type/BigInteger}
+     :base_type :type/BigInteger
+     :remapped_from nil,
+     :remapped_to nil}
     {:description nil,
      :table_id 4,
      :schema_name "PUBLIC",
@@ -45,7 +47,9 @@
      :visibility_type :normal,
      :target nil,
      :display_name "Name",
-     :base_type :type/Text}
+     :base_type :type/Text
+     :remapped_from nil,
+     :remapped_to nil}
     {:description nil,
      :table_id 4,
      :schema_name "PUBLIC",
@@ -61,7 +65,9 @@
      :visibility_type :normal,
      :target nil,
      :display_name "Category ID",
-     :base_type :type/Integer}
+     :base_type :type/Integer
+     :remapped_from nil,
+     :remapped_to nil}
     {:description nil,
      :table_id 4,
      :schema_name "PUBLIC",
@@ -76,7 +82,9 @@
      :visibility_type :normal,
      :target nil,
      :display_name "Price",
-     :base_type :type/Integer}]})
+     :base_type :type/Integer
+     :remapped_from nil,
+     :remapped_to nil}]})
 
 (expect
   (-> example-resultset
@@ -95,5 +103,14 @@
                           :name "Foo",
                           :display_name "Foo",
                           :target nil,
-                          :extra_info {}}))
+                          :extra_info {}
+                          :remapped_from "CATEGORY_ID"
+                          :remapped_to nil})
+      (update :cols #(mapv (fn [col]
+                             (if (= "CATEGORY_ID" (:name col))
+                               (assoc col
+                                 :remapped_to "Foo"
+                                 :remapped_from nil)
+                               col))
+                           %)))
   ((add-inline-remaps (constantly example-resultset)) {}))
