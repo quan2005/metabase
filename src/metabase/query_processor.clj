@@ -19,6 +19,7 @@
              [driver-specific :as driver-specific]
              [expand-macros :as expand-macros]
              [expand-resolve :as expand-resolve]
+             [fetch-source-query :as fetch-source-query]
              [format-rows :as format-rows]
              [limit :as limit]
              [log :as log-query]
@@ -86,7 +87,9 @@
        driver-specific/process-query-in-context         ; (drivers can inject custom middleware if they implement IDriver's `process-query-in-context`)
        add-settings/add-settings
        resolve-driver/resolve-driver                    ; ▲▲▲ DRIVER RESOLUTION POINT ▲▲▲ All functions *above* will have access to the driver during PRE- *and* POST-PROCESSING
+       fetch-source-query/fetch-source-query
        log-query/log-initial-query
+       ;; TODO - I think it makes sense just to add a `normalize` step here so we don't need to complex normalization logic everywhere else in the QP (specifically in expand)
        cache/maybe-return-cached-results
        catch-exceptions/catch-exceptions)
    query))
@@ -97,6 +100,7 @@
   "Expand a QUERY the same way it would normally be done as part of query processing.
    This is useful for things that need to look at an expanded query, such as permissions checking for Cards."
   (->> identity
+       fetch-source-query/fetch-source-query
        expand-resolve/expand-resolve
        parameters/substitute-parameters
        expand-macros/expand-macros))

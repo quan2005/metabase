@@ -4,7 +4,9 @@
              [codecs :as codecs]
              [hash :as hash]]
             [cheshire.core :as json]
-            [clojure.string :as str]
+            [clojure
+             [string :as str]
+             [walk :as walk]]
             [metabase.util.schema :as su]
             [schema.core :as s]))
 
@@ -36,11 +38,14 @@
 
      (normalize-keys {\"NUM_TOUCANS\" 2, :total_birds 3}) ; -> {:num-toucans 2, :total-birds 3}
 
-   This function DOES NOT normalize nested maps. If we end up needing that functionality, consider reworking
-   this function to use `clojure.walk` or adding an additional function to do so."
+   This function recursively normalizes maps within the top-level map."
   [m]
-  (into (empty m) (for [[k v] m]
-                    {(normalize-token k) v})))
+  (walk/postwalk (fn [form]
+                   (if-not (map? form)
+                     form
+                     (into (empty form) (for [[k v] form]
+                                          {(normalize-token k) v}))))
+                 m))
 
 (defn query-without-aggregations-or-limits?
   "Is the given query an MBQL query without a `:limit`, `:aggregation`, or `:page` clause?"

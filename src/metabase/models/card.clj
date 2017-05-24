@@ -16,7 +16,9 @@
              [label :refer [Label]]
              [permissions :as perms]
              [revision :as revision]]
-            [metabase.query-processor.permissions :as qp-perms]
+            [metabase.query-processor
+             [permissions :as qp-perms]
+             [util :as qputil]]
             [toucan
              [db :as db]
              [models :as models]]))
@@ -111,17 +113,24 @@
 
 ;;; ------------------------------------------------------------ Lifecycle ------------------------------------------------------------
 
+(defn- card->database+table-id
+  "Return a map with `:database-id` and source `:table-id` that should be saved for this Card. Handles Cards that use other Cards as their source
+   (ones that come in with a `:source-table` like `card__100`) as well as normal Cards."
+  [card]
+  (let [{{:keys [source-table]} :query, database-id :database} (qputil/normalize-keys (:dataset_query card))]
+    (cond
+      (integer? source-table) {:database-id database-id, :table-id source-table}
+      (string? source-table)  (let [[_ card-id] (re-find #"^card__(\d+)$" source-table)]
+                                (db/select-one [Card [:table_id :table-id] [:database_id :database-id]] :id (Integer/parseInt card-id))))))
 
-(defn- populate-query-fields [card]
-  (let [{query :query, database-id :database, query-type :type} (:dataset_query card)
-        table-id (or (:source_table query) ; legacy (MBQL '95)
-                     (:source-table query))
-        defaults {:database_id database-id
-                  :table_id    table-id
-                  :query_type  (keyword query-type)}]
-    (if query-type
-      (merge defaults card)
-      card)))
+(defn- populate-query-fields [{{query-type :type} :dataset_query, :as card}]
+  (merge (when query-type
+           (let [{:keys [database-id table-id]} (card->database+table-id card)]
+             (println "table-id:" (class table-id) table-id) ; NOCOMMIT
+             {:database_id database-id
+              :table_id    table-id
+              :query_type  (keyword query-type)}))
+         card))
 
 (defn- pre-insert [{:keys [dataset_query], :as card}]
   ;; TODO - make sure if `collection_id` is specified that we have write permissions for tha tcollection
