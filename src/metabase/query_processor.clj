@@ -100,10 +100,10 @@
   "Expand a QUERY the same way it would normally be done as part of query processing.
    This is useful for things that need to look at an expanded query, such as permissions checking for Cards."
   (->> identity
-       fetch-source-query/fetch-source-query
        expand-resolve/expand-resolve
        parameters/substitute-parameters
-       expand-macros/expand-macros))
+       expand-macros/expand-macros
+       fetch-source-query/fetch-source-query))
 ;; ▲▲▲ This only does PRE-PROCESSING, so it happens from bottom to top, eventually returning the preprocessed query instead of running it
 
 
