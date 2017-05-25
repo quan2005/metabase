@@ -10,8 +10,11 @@
              [util :as u]]
             [metabase.models
              [field :as field]
-             [table :refer [Table]]]
-            [metabase.query-processor.interface :as i]
+             [table :refer [Table]]
+             [database :refer [Database]]]
+            [metabase.query-processor
+             [interface :as i]
+             [util :as qputil]]
             [schema.core :as s]
             [toucan
              [db :as db]
@@ -242,21 +245,17 @@
 
 (defn- resolve-tables
   "Resolve the `Tables` in an EXPANDED-QUERY-DICT."
-  [{{source-table-id :source-table} :query, :keys [table-ids fk-field-ids], :as expanded-query-dict}]
+  [{{{source-table-id :id :as source-table} :source-table} :query, :keys [table-ids fk-field-ids], :as expanded-query-dict}]
   {:pre [(integer? source-table-id)]}
   (let [table-ids             (conj table-ids source-table-id)
-        source-table          (or (db/select-one [Table :schema :name :id], :id source-table-id)
-                                  (throw (Exception. (format "Query expansion failed: could not find source table %d." source-table-id))))
         joined-tables         (fk-field-ids->joined-tables source-table-id fk-field-ids)
         fk-id+table-id->table (into {[nil source-table-id] source-table}
                                     (for [{:keys [source-field table-id join-alias]} joined-tables]
                                       {[(:field-id source-field) table-id] {:name join-alias
                                                                             :id   table-id}}))]
     (as-> expanded-query-dict <>
-      (assoc-in <> [:query :source-table] source-table)
       (assoc-in <> [:query :join-tables]  joined-tables)
       (walk/postwalk #(resolve-table % fk-id+table-id->table) <>))))
-
 
 ;;; # ------------------------------------------------------------ PUBLIC INTERFACE ------------------------------------------------------------
 
@@ -267,3 +266,13 @@
           record-fk-field-ids
           resolve-fields
           resolve-tables))
+
+(defn resolve-middleware
+  "Wraps the `resolve` function in a query-processor middleware"
+  [qp]
+  (fn [{database-id :database, :as query}]
+    (let [resolved-db (db/select-one [Database :name :id :engine :details], :id database-id)
+          query       (if (qputil/mbql-query? query)
+                        (resolve query)
+                        query)]
+      (qp (assoc query :database resolved-db)))))

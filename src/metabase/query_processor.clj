@@ -19,14 +19,17 @@
              [dev :as dev]
              [driver-specific :as driver-specific]
              [expand-macros :as expand-macros]
-             [expand-resolve :as expand-resolve]
              [format-rows :as format-rows]
              [limit :as limit]
              [log :as log-query]
              [mbql-to-native :as mbql-to-native]
              [parameters :as parameters]
              [permissions :as perms]
-             [resolve-driver :as resolve-driver]]
+             [resolve-driver :as resolve-driver]
+             [source-table :as source-table]]
+            [metabase.query-processor
+             [resolve :as resolve]
+             [expand :as expand]]
             [metabase.query-processor.util :as qputil]
             [metabase.util.schema :as su]
             [schema.core :as s]
@@ -77,9 +80,11 @@
        limit/limit
        cumulative-ags/handle-cumulative-aggregations
        add-proj/add-inline-remaps
-       implicit-clauses/add-implicit-clauses
        format-rows/format-rows
-       expand-resolve/expand-resolve                 ; ▲▲▲ QUERY EXPANSION POINT  ▲▲▲ All functions *above* will see EXPANDED query during PRE-PROCESSING
+       resolve/resolve-middleware
+       implicit-clauses/add-implicit-clauses
+       source-table/resolve-source-table
+       expand/expand-middleware                      ; ▲▲▲ QUERY EXPANSION POINT  ▲▲▲ All functions *above* will see EXPANDED query during PRE-PROCESSING
        row-count-and-status/add-row-count-and-status ; ▼▼▼ RESULTS WRAPPING POINT ▼▼▼ All functions *below* will see results WRAPPED in `:data` during POST-PROCESSING
        parameters/substitute-parameters
        expand-macros/expand-macros
@@ -90,14 +95,16 @@
        cache/maybe-return-cached-results
        catch-exceptions/catch-exceptions)
    query))
-;; ▲▲▲ PRE-PROCESSING ▲▲▲ happens from BOTTOM-TO-TOP, e.g. the results of `expand-macros` are (eventually) passed to `expand-resolve`
+;; ▲▲▲ PRE-PROCESSING ▲▲▲ happens from BOTTOM-TO-TOP, e.g. the results of `expand-macros` are (eventually) passed to `expand-middleware`
 
 
 (def ^{:arglists '([query])} expand
   "Expand a QUERY the same way it would normally be done as part of query processing.
    This is useful for things that need to look at an expanded query, such as permissions checking for Cards."
   (->> identity
-       expand-resolve/expand-resolve
+       resolve/resolve-middleware
+       source-table/resolve-source-table
+       expand/expand-middleware
        parameters/substitute-parameters
        expand-macros/expand-macros))
 ;; ▲▲▲ This only does PRE-PROCESSING, so it happens from bottom to top, eventually returning the preprocessed query instead of running it

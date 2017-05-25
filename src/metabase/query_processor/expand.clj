@@ -6,7 +6,9 @@
              [core :as core]
              [string :as str]]
             [clojure.tools.logging :as log]
-            [metabase.query-processor.interface :as i]
+            [metabase.query-processor
+             [interface :as i]
+             [util :as qputil]]
             [metabase.util :as u]
             [metabase.util.schema :as su]
             [schema.core :as s])
@@ -513,6 +515,13 @@
   [outer-query]
   (update outer-query :query expand-inner))
 
+(defn expand-middleware
+  "Wraps `expand` in a query-processor middleware function"
+  [qp]
+  (fn [query]
+    (qp (if (qputil/mbql-query? query)
+          (expand query)
+          query))))
 
 (defmacro query
   "Build a query by threading an (initially empty) map through each form in BODY with `->`.
