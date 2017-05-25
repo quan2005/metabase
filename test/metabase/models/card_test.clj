@@ -7,7 +7,7 @@
              [dashboard-card :refer [DashboardCard]]
              [interface :as mi]
              [permissions :as perms]]
-            [metabase.query-processor.expand :as ql]
+            [metabase.query-processor.middleware.expand :as ql]
             [metabase.test
              [data :refer [id]]
              [util :as tu :refer [random-name]]]

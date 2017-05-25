@@ -4,8 +4,8 @@
             [metabase.models.field :refer [Field]]
             [metabase.query-processor
              [interface :as i]
-             [resolve :as resolve]
              [util :as qputil]]
+            [metabase.query-processor.middleware.resolve :as resolve]
             [toucan
              [db :as db]
              [hydrate :refer [hydrate]]]))

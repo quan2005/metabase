@@ -1,9 +1,10 @@
 (ns metabase.query-processor.expand-resolve-test
   "Tests query expansion/resolution"
   (:require [expectations :refer :all]
-            (metabase.query-processor [expand :as ql]
-                                      [resolve :as resolve])
-            [metabase.query-processor.middleware.source-table :as st]
+            [metabase.query-processor.middleware
+             [expand :as ql]
+             [resolve :as resolve]
+             [source-table :as st]]
             [metabase.test.data :refer :all]
             [metabase.util :as u]))
 

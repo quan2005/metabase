@@ -1,4 +1,4 @@
-(ns metabase.query-processor.resolve
+(ns metabase.query-processor.middleware.resolve
   "Resolve references to `Fields`, `Tables`, and `Databases` in an expanded query dictionary."
   (:refer-clojure :exclude [resolve])
   (:require [clojure

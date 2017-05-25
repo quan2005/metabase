@@ -7,7 +7,7 @@
             [clojure.tools.logging :as log]
             [honeysql.core :as hsql]
             [metabase.models.field :as field :refer [Field]]
-            [metabase.query-processor.expand :as ql]
+            [metabase.query-processor.middleware.expand :as ql]
             [metabase.util :as u]
             [metabase.util.schema :as su]
             [schema.core :as s]

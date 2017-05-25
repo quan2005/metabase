@@ -1,9 +1,9 @@
 (ns metabase.query-processor.middleware.catch-exceptions
   "Middleware for catching exceptions thrown by the query processor and returning them in a friendlier format."
-  (:require [metabase.query-processor
+  (:require [metabase.query-processor.middleware
              [expand :as expand]
-             [resolve :as resolve]]
-            [metabase.query-processor.middleware.source-table :as source-table]
+             [resolve :as resolve]
+             [source-table :as source-table]]
             [metabase.query-processor.util :as qputil]
             [metabase.util :as u]
             schema.utils)

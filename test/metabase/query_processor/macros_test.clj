@@ -9,9 +9,8 @@
              [metric :refer [Metric]]
              [segment :refer [Segment]]
              [table :refer [Table]]]
-            [metabase.query-processor
-             [expand :as ql]
-             [macros :refer :all]]
+            [metabase.query-processor.macros :refer :all]
+            [metabase.query-processor.middleware.expand :as ql]
             [metabase.test.data :as data]
             [metabase.test.data.datasets :as datasets]
             [toucan.util.test :as tt]))

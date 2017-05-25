@@ -3,7 +3,7 @@
   (:require [expectations :refer :all]
             [metabase.api.dataset :refer [default-query-constraints]]
             [metabase.models.query-execution :refer [QueryExecution]]
-            [metabase.query-processor.expand :as ql]
+            [metabase.query-processor.middleware.expand :as ql]
             [metabase.test
              [data :refer :all]
              [util :as tu]]

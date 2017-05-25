@@ -1,4 +1,4 @@
-(ns metabase.query-processor.expand
+(ns metabase.query-processor.middleware.expand
   "Converts a Query Dict as received by the API into an *expanded* one that contains extra information that will be needed to
    construct the appropriate native Query, and perform various post-processing steps such as Field ordering."
   (:refer-clojure :exclude [< <= > >= = != and or not filter count distinct sum min max + - / *])
@@ -511,7 +511,7 @@
                                   :value       {:field-placeholder {:field-id 100}
                                                 :value 200}}}}
 
-   The \"placeholder\" objects above are fetched from the DB and replaced in the next QP step, in `metabase.query-processor.resolve`."
+   The \"placeholder\" objects above are fetched from the DB and replaced in the next QP step, in `metabase.query-processor.middleware.resolve`."
   [outer-query]
   (update outer-query :query expand-inner))
 
