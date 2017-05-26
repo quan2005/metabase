@@ -87,7 +87,9 @@
                     description        :- (s/maybe su/NonBlankString)
                     parent-id          :- (s/maybe su/IntGreaterThanZero)
                     ;; Field once its resolved; FieldPlaceholder before that
-                    parent             :- s/Any]
+                    parent             :- s/Any
+                    remapped-from      :- (s/maybe s/Str)
+                    remapped-to        :- (s/maybe s/Str)]
   clojure.lang.Named
   (getName [_] field-name) ; (name <field>) returns the *unqualified* name of the field, #obvi
 
@@ -174,7 +176,9 @@
                                fk-field-id   :- (s/maybe (s/constrained su/IntGreaterThanZero
                                                                         (fn [_] (or (assert-driver-supports :foreign-keys) true))
                                                                         "foreign-keys is not supported by this driver."))
-                               datetime-unit :- (s/maybe (apply s/enum datetime-field-units))])
+                               datetime-unit :- (s/maybe (apply s/enum datetime-field-units))
+                               remapped_from :- (s/maybe s/Str)
+                               remapped_to   :- (s/maybe s/Str)])
 
 (s/defrecord AgFieldRef [index :- s/Int])
 

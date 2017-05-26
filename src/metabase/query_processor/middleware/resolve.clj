@@ -103,10 +103,10 @@
 
 ;;; ## ------------------------------------------------------------ FIELD PLACEHOLDER ------------------------------------------------------------
 
-(defn- field-ph-resolve-field [{:keys [field-id datetime-unit fk-field-id], :as this} field-id->field]
+(defn- field-ph-resolve-field [{:keys [field-id datetime-unit], :as this} field-id->field]
   (if-let [{:keys [base-type special-type], :as field} (some-> (field-id->field field-id)
                                                                i/map->Field
-                                                               (assoc :fk-field-id fk-field-id))]
+                                                               (merge (select-keys this [:fk-field-id :remapped-from :remapped-to])))]
     ;; try to resolve the Field with the ones available in field-id->field
     (let [datetime-field? (or (isa? base-type :type/DateTime)
                               (isa? special-type :type/DateTime))]
