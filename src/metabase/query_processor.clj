@@ -78,9 +78,9 @@
        dev/check-results-format
        limit/limit
        cumulative-ags/handle-cumulative-aggregations
-       add-proj/add-inline-remaps
        format-rows/format-rows
        resolve/resolve-middleware
+       add-proj/add-inline-remaps
        implicit-clauses/add-implicit-clauses
        source-table/resolve-source-table
        expand/expand-middleware                      ; ▲▲▲ QUERY EXPANSION POINT  ▲▲▲ All functions *above* will see EXPANDED query during PRE-PROCESSING
