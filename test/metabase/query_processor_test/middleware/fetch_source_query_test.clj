@@ -1,6 +1,8 @@
 (ns metabase.query-processor-test.middleware.fetch-source-query-test
   (:require [expectations :refer [expect]]
-            [metabase.models.card :refer [Card]]
+            [metabase.models
+             [card :refer [Card]]
+             [database :as database]]
             [metabase.query-processor.middleware.fetch-source-query :as fetch-source-query]
             [metabase.test.data :as data]
             [metabase.util :as u]
@@ -18,7 +20,7 @@
   (tt/with-temp Card [card {:dataset_query {:database (data/id)
                                             :type     :query
                                             :query    {:source-table (data/id :venues)}}}]
-    (fetch-source-query {:database -1
+    (fetch-source-query {:database database/virtual-id
                          :type     :query
                          :query    {:source-table (str "card__" (u/get-id card))
                                     :aggregation  [:count]
@@ -34,7 +36,7 @@
   (tt/with-temp Card [card {:dataset_query {:database (data/id)
                                             :type     :native
                                             :native   {:query (format "SELECT * FROM %s" (data/format-name "venues"))}}}]
-    (fetch-source-query {:database -1
+    (fetch-source-query {:database database/virtual-id
                          :type     :query
                          :query    {:source-table (str "card__" (u/get-id card))
                                     :aggregation  [:count]

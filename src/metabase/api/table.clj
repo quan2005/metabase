@@ -9,6 +9,7 @@
             [metabase.api.common :as api]
             [metabase.models
              [card :refer [Card]]
+             [database :as database]
              [field :refer [Field]]
              [interface :as mi]
              [table :as table :refer [Table]]]
@@ -102,7 +103,7 @@
   [id]
   (let [{metadata :result_metadata, card-name :name} (api/read-check (db/select-one [Card :dataset_query :result_metadata :name], :id id))]
     {:display_name card-name
-     :db_id        -1
+     :db_id        database/virtual-id
      :id           (str "card__" id)
      :fields       (for [col metadata]
                      (assoc col

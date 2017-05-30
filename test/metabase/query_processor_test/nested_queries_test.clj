@@ -6,7 +6,9 @@
              [query-processor :as qp]
              [query-processor-test :refer :all]
              [util :as u]]
-            [metabase.models.card :refer [Card]]
+            [metabase.models
+             [card :refer [Card]]
+             [database :as database]]
             [metabase.test.data :as data]
             [metabase.test.data.datasets :as datasets]
             [toucan.util.test :as tt]))
@@ -107,7 +109,7 @@
     (rows+cols
       (format-rows-by [int int]
         (qp/process-query
-          {:database -1
+          {:database database/virtual-id
            :type     :query
            :query    {:source-table (str "card__" (u/get-id card))
                       :aggregation  [:count]
@@ -122,7 +124,7 @@
     (rows+cols
       (format-rows-by [int int]
         (qp/process-query
-          {:database -1
+          {:database database/virtual-id
            :type     :query
            :query    {:source-table (str "card__" (u/get-id card))
                       :aggregation  [:count]

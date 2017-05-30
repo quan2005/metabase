@@ -13,7 +13,7 @@
             [metabase.api.common.internal :refer [route-fn-name]]
             [metabase.models
              [card :refer [Card]]
-             [database :refer [Database]]
+             [database :as database, :refer [Database]]
              [query :as query]]
             [metabase.query-processor.util :as qputil]
             [metabase.util.schema :as su]
@@ -33,11 +33,12 @@
   {:max-results           max-results
    :max-results-bare-rows max-results-bare-rows})
 
-;; TODO - HACK - This is super hacky, but for the time being until frontend changes are made the Saved Questions virtual database
-;; is the DB with ID of -1. This should be cleaned up so we're not using a magic number before merging but for proof-of-concept purposes
-;; this should work for now.
-(defn- is-nested-query? [query]
-  (= (:database query) -1))
+
+(defn- has-source-query?
+  "Is this QUERY one that uses nested queries (i.e., does it use another query as its source)?"
+  [query]
+  ;; Check whether the query specifies the 'Virtual' database (using the "secret" ID we assigned to it)
+  (= (:database query) database/virtual-id))
 
 (defn- execute-nested-query
   "For a QUERY that uses a saved Card as its source, check permissions as appropriate and add the approprate `:source-query` clause."
@@ -60,7 +61,7 @@
 (api/defendpoint POST "/"
   "Execute a query and retrieve the results in the usual format."
   [:as {body :body}]
-  (if (is-nested-query? body)
+  (if (has-source-query? body)
     (execute-nested-query body)
     (execute-query body)))
 

@@ -52,21 +52,22 @@
   "Fetch the Cards that can be used as source queries (e.g. presented as virtual tables)."
   []
   (as-> (db/select [Card :name :description :database_id :dataset_query :id :collection_id]
-          :result_metadata [:not= nil]
-          {:order_by [:%lower.name :asc]}) <>
-    (filter :database_id <>)
-    (filter #(driver/driver-supports? (driver/database-id->driver (:database_id %)) :nested-queries) <>)
-    (filter mi/can-read? <>)
-    (hydrate  <> :collection)))
+        :result_metadata [:not= nil]
+        {:order_by [:%lower.name :asc]}) <>
+      (filter (fn [{database-id :database_id, :as card}]
+                (and database-id
+                     (driver/driver-supports? (driver/database-id->driver database-id) :nested-queries)
+                     (mi/can-read? card)))
+              <>)
+      (hydrate <> :collection)))
 
-;; TODO - we also need to filter out Cards whose database doesn't support nested queries. (I think we need to add a new `feature` for this)
 (defn- cards-virtual-tables
   "Return a sequence of 'virtual' Table metadata for eligible Cards.
    (This takes the Cards from `source-query-cards` and returns them in a format suitable for consumption by the Query Builder.)"
   []
   (for [card (source-query-cards)]
     {:id           (str "card__" (:id card))
-     :db_id        -1
+     :db_id        database/virtual-id
      :display_name (:name card)
      :schema       (get-in card [:collection :name] "All questions")
      :description  (:description card)}))
@@ -79,16 +80,8 @@
       dbs
       (conj (vec dbs)
             {:name     "Saved Questions"
-             ;; TODO - this is a bit hacky but the frontend doesn't work properly if there's not an integer ID defined.
-             ;; We should make some frontend changes to let us skip trying to read the ID for the Cards "virtual" database
-             :id       -1
-             ;; TODO - how do we determine which features are supported by these virtual tables? It sounds like it's dependent on
-             ;; database backing each "table" (Card). This presents a problem since the frontend assumes every table for a database
-             ;; supports the same feature set.
-             ;; For now, just return `:basic-aggregations` so we can test out the feature.
+             :id       database/virtual-id
              :features #{:basic-aggregations}
-             ;; TODO - Do we need this? If so, get the correct value
-             :engine   :postgres
              :tables   (cards-virtual-tables)}))))
 
 (defn- dbs-list [include-tables? include-cards?]
