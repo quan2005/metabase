@@ -119,7 +119,7 @@
                                  :remapped_from nil)
                                col))
                            %)))
-  (add-inline-remaps example-resultset))
+  (remap-results example-resultset))
 
 (def example-query
   {:query
@@ -173,9 +173,22 @@
   (-> example-query
       ;; This needs to be fixed, we don't know the name of the new
       ;; column until it gets resolved, so it doesn't get set here
-      #_(update-in [:query :fields 2] assoc :remapped-to "TITLE" :remapped-from nil)
       (update-in [:query :fields] conj (i/map->FieldPlaceholder {:fk-field-id 32
                                                                  :field-id 27
                                                                  :remapped-from "PRODUCT_ID"
-                                                                 :remapped-to nil})))
+                                                                 :remapped-to nil
+                                                                 :field-display-name "Product"})))
   (add-fk-remaps example-query))
+
+(def external-remapped-result
+  (update-in example-resultset [:cols 2]
+             (fn [col]
+               (-> col
+                   (update :values merge {:human_readable_values [] })
+                   (update :dimensions merge {:type "external" :human_readable_field_id 27})))))
+
+(expect
+  (-> external-remapped-result
+      (update :cols (fn [col] (mapv #(dissoc % :dimensions :values) col)))
+      (update-in [:cols 2] assoc :remapped_to "Foo"))
+  (remap-results external-remapped-result))

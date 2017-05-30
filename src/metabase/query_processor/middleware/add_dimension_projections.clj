@@ -18,15 +18,16 @@
    :remapped_from remapped-from
    :remapped_to nil})
 
-(defn create-fk-remap-col [fk-field-id dest-field-id remapped-from]
+(defn create-fk-remap-col [fk-field-id dest-field-id remapped-from field-display-name]
   (i/map->FieldPlaceholder {:fk-field-id fk-field-id
                             :field-id dest-field-id
                             :remapped-from remapped-from
-                            :remapped-to nil}))
+                            :remapped-to nil
+                            :field-display-name field-display-name}))
 
 (defn row-map-fn [dim-seq]
   (fn [row]
-    (concat row (map (fn [{:keys [col-index xform-fn type]}]
+    (concat row (map (fn [{:keys [col-index xform-fn]}]
                        (xform-fn (nth row col-index)))
                      dim-seq))))
 
@@ -41,36 +42,38 @@
   (update-in query [:query :fields]
              (fn [fields]
                (concat fields
-                       (for [{{:keys [field_id human_readable_field_id type]} :dimensions, :keys [field-name]} fields
+                       (for [{{:keys [field_id human_readable_field_id type name]} :dimensions, :keys [field-name]} fields
                              :when (= "external" type)]
                          (create-fk-remap-col field_id
                                               human_readable_field_id
-                                              field-name))))))
+                                              field-name
+                                              name))))))
 
 (defn col->dim-map
   [idx {{remap-to :name remap-type :type field-id :field_id} :dimensions :as col}]
-  (when (= "internal" remap-type)
-    (let [remap-from (:name col)]
-      {:col-index idx
-       :from remap-from
-       :to remap-to
-       :xform-fn (zipmap (get-in col [:values :values])
-                         (get-in col [:values :human_readable_values]))
-       :new-column (create-expression-col remap-to remap-from)})))
+  (let [remap-from (:name col)]
+    {:col-index idx
+     :from remap-from
+     :to remap-to
+     :xform-fn (zipmap (get-in col [:values :values])
+                       (get-in col [:values :human_readable_values]))
+     :new-column (create-expression-col remap-to remap-from)
+     :type remap-type}))
 
-(defn add-inline-remaps
+(defn remap-results
   [results]
   (let [indexed-dims (keep-indexed col->dim-map (:cols results))
-        remap-fn (row-map-fn indexed-dims)
+        internal-only-dims (filter #(= "internal" (:type %)) indexed-dims)
+        remap-fn (row-map-fn internal-only-dims)
         from->to (reduce (fn [acc {:keys [from to]}]
                            (assoc acc from to)) {} indexed-dims)]
     (-> results
-        (update :columns into (map :to indexed-dims))
+        (update :columns into (map :to internal-only-dims))
         (update :cols (fn [cols]
                         (into (mapv (comp #(dissoc % :dimensions :values)
                                           (assoc-remapped-to from->to))
                                     cols)
-                              (map :new-column indexed-dims))))
+                              (map :new-column internal-only-dims))))
         (update :rows #(map remap-fn %)))))
 
 (defn add-remapping [qp]
@@ -78,4 +81,4 @@
     (-> query
         add-fk-remaps
         qp
-        add-inline-remaps)))
+        remap-results)))

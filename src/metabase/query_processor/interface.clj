@@ -172,13 +172,14 @@
 ;;; # ------------------------------------------------------------ PLACEHOLDER TYPES: FIELDPLACEHOLDER + VALUEPLACEHOLDER ------------------------------------------------------------
 
 ;; Replace Field IDs with these during first pass
-(s/defrecord FieldPlaceholder [field-id      :- su/IntGreaterThanZero
-                               fk-field-id   :- (s/maybe (s/constrained su/IntGreaterThanZero
-                                                                        (fn [_] (or (assert-driver-supports :foreign-keys) true))
-                                                                        "foreign-keys is not supported by this driver."))
-                               datetime-unit :- (s/maybe (apply s/enum datetime-field-units))
-                               remapped_from :- (s/maybe s/Str)
-                               remapped_to   :- (s/maybe s/Str)])
+(s/defrecord FieldPlaceholder [field-id            :- su/IntGreaterThanZero
+                               fk-field-id         :- (s/maybe (s/constrained su/IntGreaterThanZero
+                                                                              (fn [_] (or (assert-driver-supports :foreign-keys) true))
+                                                                              "foreign-keys is not supported by this driver."))
+                               datetime-unit       :- (s/maybe (apply s/enum datetime-field-units))
+                               remapped-from       :- (s/maybe s/Str)
+                               remapped-to         :- (s/maybe s/Str)
+                               field-display-name  :- (s/maybe s/Str)])
 
 (s/defrecord AgFieldRef [index :- s/Int])
 

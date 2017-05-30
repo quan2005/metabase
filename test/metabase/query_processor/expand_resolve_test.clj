@@ -31,16 +31,18 @@
     :type     :query
     :query    {:source-table (id :venues)
                :filter       {:filter-type :>
-                              :field       {:field-id      (id :venues :price)
-                                            :fk-field-id   nil
-                                            :datetime-unit nil
-                                            :remapped_from nil
-                                            :remapped_to   nil}
-                              :value       {:field-placeholder {:field-id      (id :venues :price)
-                                                                :fk-field-id   nil
-                                                                :datetime-unit nil
-                                                                :remapped_to   nil
-                                                                :remapped_from nil}
+                              :field       {:field-id           (id :venues :price)
+                                            :fk-field-id        nil
+                                            :datetime-unit      nil
+                                            :remapped-from      nil
+                                            :remapped-to        nil
+                                            :field-display-name nil}
+                              :value       {:field-placeholder {:field-id           (id :venues :price)
+                                                                :fk-field-id        nil
+                                                                :datetime-unit      nil
+                                                                :remapped-to        nil
+                                                                :remapped-from      nil
+                                                                :field-display-name nil}
                                             :value             1}}}}
    ;; resolved form
    {:database     (id)
@@ -98,16 +100,18 @@
     :type     :query
     :query    {:source-table (id :venues)
                :filter       {:filter-type :=
-                              :field       {:field-id      (id :categories :name)
-                                            :fk-field-id   (id :venues :category_id)
-                                            :datetime-unit nil
-                                            :remapped_from nil
-                                            :remapped_to   nil}
-                              :value       {:field-placeholder {:field-id      (id :categories :name)
-                                                                :fk-field-id   (id :venues :category_id)
-                                                                :datetime-unit nil
-                                                                :remapped_from nil
-                                                                :remapped_to   nil}
+                              :field       {:field-id           (id :categories :name)
+                                            :fk-field-id        (id :venues :category_id)
+                                            :datetime-unit      nil
+                                            :remapped-from      nil
+                                            :remapped-to        nil
+                                            :field-display-name nil}
+                              :value       {:field-placeholder {:field-id           (id :categories :name)
+                                                                :fk-field-id        (id :venues :category_id)
+                                                                :datetime-unit      nil
+                                                                :remapped-from      nil
+                                                                :remapped-to        nil
+                                                                :field-display-name nil}
                                             :value             "abc"}}}}
    ;; resolved form
    {:database     (id)
@@ -173,16 +177,18 @@
     :type     :query
     :query    {:source-table (id :checkins)
                :filter       {:filter-type :>
-                              :field       {:field-id      (id :users :last_login)
-                                            :fk-field-id   (id :checkins :user_id)
-                                            :datetime-unit :year
-                                            :remapped_from nil
-                                            :remapped_to   nil}
-                              :value       {:field-placeholder {:field-id      (id :users :last_login)
-                                                                :fk-field-id   (id :checkins :user_id)
-                                                                :datetime-unit :year
-                                                                :remapped_from nil
-                                                                :remapped_to   nil}
+                              :field       {:field-id           (id :users :last_login)
+                                            :fk-field-id        (id :checkins :user_id)
+                                            :datetime-unit      :year
+                                            :remapped-from      nil
+                                            :remapped-to        nil
+                                            :field-display-name nil}
+                              :value       {:field-placeholder {:field-id           (id :users :last_login)
+                                                                :fk-field-id        (id :checkins :user_id)
+                                                                :datetime-unit      :year
+                                                                :remapped-from      nil
+                                                                :remapped-to        nil
+                                                                :field-display-name nil}
                                             :value             "1980-01-01"}}}}
    ;; resolved form
    {:database     (id)
@@ -251,16 +257,18 @@
     :query    {:source-table (id :checkins)
                :aggregation  [{:aggregation-type :sum
                                :custom-name      nil
-                               :field            {:field-id      (id :venues :price)
-                                                  :fk-field-id   (id :checkins :venue_id)
-                                                  :datetime-unit nil
-                                                  :remapped_from nil
-                                                  :remapped_to   nil}}]
-               :breakout     [{:field-id      (id :checkins :date)
-                               :fk-field-id   nil
-                               :datetime-unit :day-of-week
-                               :remapped_from nil
-                               :remapped_to   nil}]}}
+                               :field            {:field-id           (id :venues :price)
+                                                  :fk-field-id        (id :checkins :venue_id)
+                                                  :datetime-unit      nil
+                                                  :remapped-from      nil
+                                                  :remapped-to        nil
+                                                  :field-display-name nil}}]
+               :breakout     [{:field-id           (id :checkins :date)
+                               :fk-field-id        nil
+                               :datetime-unit      :day-of-week
+                               :remapped-from      nil
+                               :remapped-to        nil
+                               :field-display-name nil}]}}
    ;; resolved form
    {:database     (id)
     :type         :query

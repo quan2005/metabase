@@ -13,7 +13,7 @@
 (expect
   {:expressions {:my-cool-new-field (qpi/map->ArithmeticExpression {:operator :*
                                                                     :args [{:field-id 10, :fk-field-id nil, :datetime-unit nil
-                                                                            :remapped_from nil, :remapped_to nil}
+                                                                            :remapped-from nil, :remapped-to nil, :field-display-name nil}
                                                                            20.0]})}} ; 20 should be converted to a FLOAT
   (ql/expressions {} {:my-cool-new-field (ql/* (ql/field-id 10) 20)}))
 
