@@ -331,8 +331,9 @@ var Query = {
         return Array.isArray(field) && mbqlEq(field[0], "aggregation");
     },
 
+    // field literal has the formal ["field-literal", <field-name>, <field-base-type>]
     isFieldLiteral(field) {
-        return Array.isArray(field) && field.length === 3 && mbqlEq(field[0], "field-literal");
+        return Array.isArray(field) && field.length === 3 && mbqlEq(field[0], "field-literal") && _.isString(field[1]) && _.isString(field[2]);
     },
 
     isValidField(field) {
@@ -345,7 +346,8 @@ var Query = {
                     (field[2] === "as" && typeof field[3] === "string") : // deprecated
                     typeof field[2] === "string")) ||
             (Query.isExpressionField(field) && _.isString(field[1])) ||
-            (Query.isAggregateField(field)  && typeof field[1] === "number")
+            (Query.isAggregateField(field)  && typeof field[1] === "number") ||
+            Query.isFieldLiteral(field)
         );
     },
 
