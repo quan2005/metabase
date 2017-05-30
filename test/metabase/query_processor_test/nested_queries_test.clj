@@ -63,7 +63,8 @@
     (qp/process-query
       {:database (data/id)
        :type     :query
-       :query    {:source-query {:native (format  "SELECT * FROM %s ORDER BY %s ASC LIMIT 10" (data/format-name "venues") (data/format-name "id"))}
+       :query    {:source-query {:native (format  "SELECT * FROM %s" (data/format-name "venues"))}
+                  :order-by     [:asc [:field-literal (keyword (data/format-name :id)) :type/Integer]]
                   :limit        5}})))
 
 (def ^:private ^:const breakout-results
