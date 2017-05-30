@@ -137,8 +137,10 @@
 (defn- generic-info-for-missing-key
   "Return a set of bare-bones metadata for a Field named K when all else fails.
    Scan the INITIAL-VALUES of K in an attempt to determine the `base-type`."
-  [k initial-values]
-  {:base-type          (driver/values->base-type initial-values)
+  [k & [initial-values]]
+  {:base-type          (if (seq initial-values)
+                         (driver/values->base-type initial-values)
+                         :type/*)
    :preview-display    true
    :special-type       nil
    :field-name         k
