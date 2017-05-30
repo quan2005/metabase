@@ -8,7 +8,8 @@
              [string :as str]
              [walk :as walk]]
             [metabase.util.schema :as su]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [medley.core :as m]))
 
 (defn mbql-query?
   "Is the given query an MBQL query?"
@@ -41,10 +42,11 @@
    This function recursively normalizes maps within the top-level map."
   [m]
   (walk/postwalk (fn [form]
-                   (if-not (map? form)
-                     form
-                     (into (empty form) (for [[k v] form]
-                                          {(normalize-token k) v}))))
+                   (cond
+                     (not (map? form)) form
+                     (record? form)    form                                   ; record types should already be in lisp-case so nothing to do here
+                     :else             (into {} (for [[k v] form]             ; all other maps should be normalized
+                                                  {(normalize-token k) v}))))
                  m))
 
 (defn query-without-aggregations-or-limits?

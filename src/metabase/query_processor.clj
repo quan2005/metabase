@@ -89,7 +89,6 @@
        resolve-driver/resolve-driver                    ; ▲▲▲ DRIVER RESOLUTION POINT ▲▲▲ All functions *above* will have access to the driver during PRE- *and* POST-PROCESSING
        fetch-source-query/fetch-source-query
        log-query/log-initial-query
-       ;; TODO - I think it makes sense just to add a `normalize` step here so we don't need to complex normalization logic everywhere else in the QP (specifically in expand)
        cache/maybe-return-cached-results
        catch-exceptions/catch-exceptions)
    query))
