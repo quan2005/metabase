@@ -20,11 +20,12 @@
   (let [[database-id source-query] (card-id->database-id+source-query card-id)]
     (-> outer-query
         (assoc :database database-id)
-        (m/dissoc-in [:query :source-table])
-        (assoc-in [:query :source-query] source-query))))
+        (update :query (fn [query]
+                         (-> (qputil/dissoc-normalized query :source-table)
+                             (assoc :source-query source-query)))))))
 
 (defn- fetch-source-query* [outer-query]
-  (let [{{:keys [source-table], :as inner-query} :query, :as outer-query} (qputil/normalize-keys outer-query)]
+  (let [source-table (qputil/get-in-normalized outer-query [:query :source-table])]
     (if-not (string? source-table)
       outer-query
       (let [[_ card-id] (re-find #"^card__(\d+)$" source-table)]

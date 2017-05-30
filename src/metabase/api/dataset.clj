@@ -41,9 +41,8 @@
 
 (defn- execute-nested-query
   "For a QUERY that uses a saved Card as its source, check permissions as appropriate and add the approprate `:source-query` clause."
-  [{query :query, :as outer-query}]
-  (let [query           (qputil/normalize-keys query)
-        [_ card-id-str] (re-matches #"^card__(\d+$)" (or (:source-table query)
+  [{inner-query :query, :as outer-query}]
+  (let [[_ card-id-str] (re-matches #"^card__(\d+$)" (or (qputil/get-normalized inner-query :source-table)
                                                          (throw (Exception. "Missing :source_table in query."))))]
     (when-not card-id-str
       (throw (Exception. (str "Invalid source query ID. Expected a string like 'card__100'. Got: " card-id-str))))

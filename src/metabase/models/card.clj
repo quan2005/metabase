@@ -117,7 +117,8 @@
   "Return a map with `:database-id` and source `:table-id` that should be saved for this Card. Handles Cards that use other Cards as their source
    (ones that come in with a `:source-table` like `card__100`) as well as normal Cards."
   [card]
-  (let [{{:keys [source-table]} :query, database-id :database} (qputil/normalize-keys (:dataset_query card))]
+  (let [database-id  (qputil/get-in-normalized card [:dataset-query :database])
+        source-table (qputil/get-in-normalized card [:dataset-query :query :source-table])]
     (cond
       (integer? source-table) {:database-id database-id, :table-id source-table}
       (string? source-table)  (let [[_ card-id] (re-find #"^card__(\d+)$" source-table)]
