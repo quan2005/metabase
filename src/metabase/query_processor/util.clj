@@ -60,6 +60,8 @@
 
      (get-normalized {\"NUM_TOUCANS\" 2} :num-toucans) ; -> 2"
   ([m k]
+   {:pre [(or (u/maybe? map? m)
+              (println "Not a map:" m))]}
    (let [k (normalize-token k)]
      (some (fn [[map-k v]]
              (when (= k (normalize-token map-k))
@@ -88,6 +90,8 @@
 
      (dissoc-normalized {\"NUM_TOUCANS\" 3} :num-toucans) ; -> {}"
   [m k]
+  {:pre [(or (u/maybe? map? m)
+             (println "Not a map:" m))]}
   (let [k (normalize-token k)]
     (loop [m m, [map-k & more, :as ks] (keys m)]
       (cond

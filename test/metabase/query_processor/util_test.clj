@@ -116,12 +116,24 @@
 (expect 2 (qputil/get-normalized {:NUM_TOUCANS 2}  :num-toucans))
 (expect 2 (qputil/get-normalized {:num-toucans 2}  :num-toucans))
 
+(expect
+  nil
+  (qputil/get-normalized nil :num-toucans))
+
 (expect 2 (qputil/get-in-normalized {"BIRDS" {"NUM_TOUCANS" 2}} [:birds :num-toucans]))
 (expect 2 (qputil/get-in-normalized {"birds" {"num_toucans" 2}} [:birds :num-toucans]))
 (expect 2 (qputil/get-in-normalized {"birds" {"num-toucans" 2}} [:birds :num-toucans]))
 (expect 2 (qputil/get-in-normalized {:BIRDS  {:NUM_TOUCANS 2}}  [:birds :num-toucans]))
 (expect 2 (qputil/get-in-normalized {:birds  {:num_toucans 2}}  [:birds :num-toucans]))
 (expect 2 (qputil/get-in-normalized {:birds  {:num-toucans 2}}  [:birds :num-toucans]))
+
+(expect
+  2
+  (qputil/get-in-normalized {:num-toucans 2} [:num-toucans]))
+
+(expect
+  nil
+  (qputil/get-in-normalized nil [:birds :num-toucans]))
 
 (expect
   10
@@ -139,3 +151,7 @@
 (expect
   {}
   (qputil/dissoc-normalized {:num-toucans 3, "NUM_TOUCANS" 3, "num_toucans" 3} :num-toucans))
+
+(expect
+  nil
+  (qputil/dissoc-normalized nil :num-toucans))
