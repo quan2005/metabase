@@ -126,7 +126,6 @@
 (defn- populate-query-fields [{{query-type :type} :dataset_query, :as card}]
   (merge (when query-type
            (let [{:keys [database-id table-id]} (card->database+table-id card)]
-             (println "table-id:" (class table-id) table-id) ; NOCOMMIT
              {:database_id database-id
               :table_id    table-id
               :query_type  (keyword query-type)}))

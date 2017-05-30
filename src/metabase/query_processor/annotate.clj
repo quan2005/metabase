@@ -264,7 +264,6 @@
                    (zipmap columns row))
         cols    (resolve-sort-and-format-columns (:query query) (set columns) (take 10 row-maps))
         columns (mapv :name cols)]
-    (println "(u/pprint-to-str cols):" (u/pprint-to-str cols)) ; NOCOMMIT
     (assoc results
       :cols    (vec (for [col cols]
                       (update col :name name)))
