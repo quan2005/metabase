@@ -51,29 +51,34 @@
 
 (defn col->dim-map
   [idx {{remap-to :name remap-type :type field-id :field_id} :dimensions :as col}]
-  (let [remap-from (:name col)]
-    {:col-index idx
-     :from remap-from
-     :to remap-to
-     :xform-fn (zipmap (get-in col [:values :values])
-                       (get-in col [:values :human_readable_values]))
-     :new-column (create-expression-col remap-to remap-from)
-     :type remap-type}))
+  (when field-id
+    (let [remap-from (:name col)]
+      {:col-index idx
+       :from remap-from
+       :to remap-to
+       :xform-fn (zipmap (get-in col [:values :values])
+                         (get-in col [:values :human_readable_values]))
+       :new-column (create-expression-col remap-to remap-from)
+       :type remap-type})))
 
 (defn remap-results
   [results]
   (let [indexed-dims (keep-indexed col->dim-map (:cols results))
         internal-only-dims (filter #(= "internal" (:type %)) indexed-dims)
         remap-fn (row-map-fn internal-only-dims)
-        from->to (reduce (fn [acc {:keys [from to]}]
-                           (assoc acc from to)) {} indexed-dims)]
+        columns (concat (:cols results)
+                        (map :new-column internal-only-dims))
+        from->to (reduce (fn [acc {:keys [remapped_from name]}]
+                           (if remapped_from
+                             (assoc acc remapped_from name)
+                             acc))
+                         {} columns)]
     (-> results
         (update :columns into (map :to internal-only-dims))
         (update :cols (fn [cols]
-                        (into (mapv (comp #(dissoc % :dimensions :values)
-                                          (assoc-remapped-to from->to))
-                                    cols)
-                              (map :new-column internal-only-dims))))
+                        (mapv (comp #(dissoc % :dimensions :values)
+                                    (assoc-remapped-to from->to))
+                              columns)))
         (update :rows #(map remap-fn %)))))
 
 (defn add-remapping [qp]

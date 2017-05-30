@@ -65,7 +65,7 @@
      :id 11,
      :values {:id 1, :human_readable_values ["Foo" "Bar" "Baz" "Qux"],
               :values [4 11 29 20], :field_id 33}
-     :dimensions {:id 1 :type "internal" :name "Foo"}
+     :dimensions {:id 1 :type "internal" :name "Foo" :field_id 10}
      :visibility_type :normal,
      :target nil,
      :display_name "Category ID",
@@ -181,14 +181,30 @@
   (add-fk-remaps example-query))
 
 (def external-remapped-result
-  (update-in example-resultset [:cols 2]
-             (fn [col]
-               (-> col
-                   (update :values merge {:human_readable_values [] })
-                   (update :dimensions merge {:type "external" :human_readable_field_id 27})))))
+  (-> example-resultset
+      (update :cols conj {:description "The name of the product as it should be displayed to customers.",
+                          :table_id 3,
+                          :schema_name nil,
+                          :special_type :type/Category,
+                          :name "CATEGORY",
+                          :source :fields,
+                          :remapped_from "CATEGORY_ID",
+                          :extra_info {},
+                          :fk_field_id 32,
+                          :remapped_to nil,
+                          :id 27,
+                          :visibility_type :normal,
+                          :target nil,
+                          :display_name "Category",
+                          :base_type :type/Text})
+      (update-in [:cols 2]
+                 (fn [col]
+                   (-> col
+                       (update :values merge {:human_readable_values [] })
+                       (update :dimensions merge {:type "external" :human_readable_field_id 27}))))))
 
 (expect
   (-> external-remapped-result
       (update :cols (fn [col] (mapv #(dissoc % :dimensions :values) col)))
-      (update-in [:cols 2] assoc :remapped_to "Foo"))
+      (update-in [:cols 2] assoc :remapped_to "CATEGORY"))
   (remap-results external-remapped-result))
