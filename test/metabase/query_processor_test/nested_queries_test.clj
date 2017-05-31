@@ -2,15 +2,18 @@
   "Tests for handling queries with nested expressions."
   (:require [clojure.string :as str]
             [expectations :refer [expect]]
+            [honeysql.core :as hsql]
             [metabase
              [query-processor :as qp]
              [query-processor-test :refer :all]
              [util :as u]]
             [metabase.models
              [card :refer [Card]]
-             [database :as database]]
+             [database :as database]
+             [table :refer [Table]]]
             [metabase.test.data :as data]
             [metabase.test.data.datasets :as datasets]
+            [toucan.db :as db]
             [toucan.util.test :as tt]))
 
 (defn- rows+cols
@@ -46,6 +49,15 @@
                                  :limit        10}
                   :limit        5}})))
 
+(defn- venues-identifier
+  "Return the identifier for the venues Table for the current DB.
+   (Normally this is just `venues`, but some databases like Redshift do clever hacks
+   like prefixing table names with a unique schema for each test run because we're not
+   allowed to create new databases.)"
+  []
+  (let [{schema :schema, table-name :name} (db/select-one [Table :name :schema] :id (data/id :venues))]
+    (name (hsql/qualify schema table-name))))
+
 ;; make sure we can do a basic query with a SQL source-query
 (datasets/expect-with-engines (engines-that-support :nested-queries)
   {:rows [[ 4 1 10.0646 -165.374 "Red Medicine"                 3]
@@ -63,7 +75,7 @@
     (qp/process-query
       {:database (data/id)
        :type     :query
-       :query    {:source-query {:native (format  "SELECT * FROM %s" (data/format-name "venues"))}
+       :query    {:source-query {:native (format "SELECT * FROM %s" (venues-identifier))}
                   :order-by     [:asc [:field-literal (keyword (data/format-name :id)) :type/Integer]]
                   :limit        5}})))
 
@@ -95,7 +107,7 @@
       (qp/process-query
         {:database (data/id)
          :type     :query
-         :query    {:source-query {:native (format "SELECT * FROM %s" (data/format-name "venues"))}
+         :query    {:source-query {:native (format "SELECT * FROM %s" (venues-identifier))}
                     :aggregation  [:count]
                     :breakout     [[:field-literal (keyword (data/format-name :price)) :type/Integer]]}}))))
 
@@ -121,7 +133,7 @@
   breakout-results
   (tt/with-temp Card [card {:dataset_query {:database (data/id)
                                             :type     :native
-                                            :native   {:query (format "SELECT * FROM %s" (data/format-name "venues"))}}}]
+                                            :native   {:query (format "SELECT * FROM %s" (venues-identifier))}}}]
     (rows+cols
       (format-rows-by [int int]
         (qp/process-query
