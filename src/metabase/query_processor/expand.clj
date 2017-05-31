@@ -29,7 +29,7 @@
   [id :- su/IntGreaterThanZero]
   (i/map->FieldPlaceholder {:field-id id}))
 
-(s/defn ^:private ^:always-validate field :- i/AnyFieldOrExpression
+(s/defn ^:private ^:always-validate field :- i/AnyField
   "Generic reference to a `Field`. F can be an integer Field ID, or various other forms like `fk->` or `aggregation`."
   [f]
   (if (integer? f)
