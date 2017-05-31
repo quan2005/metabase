@@ -33,13 +33,21 @@
    Not neccesarily bound when using various functions like `fk->` in the REPL."
   nil)
 
+(defn driver-supports?
+  "Does the currently bound `*driver*` support FEATURE?
+   (This returns `nil` if `*driver*` is unbound. `*driver*` is always bound when running queries the normal way,
+   but may not be when calling this function directly from the REPL.)"
+  [feature]
+  (when *driver*
+    ((resolve 'metabase.driver/driver-supports?) *driver* feature)))
+
 ;; `assert-driver-supports` doesn't run check when `*driver*` is unbound (e.g., when used in the REPL)
 ;; Allows flexibility when composing queries for tests or interactive development
 (defn assert-driver-supports
   "When `*driver*` is bound, assert that is supports keyword FEATURE."
   [feature]
   (when *driver*
-    (when-not (contains? ((resolve 'metabase.driver/features) *driver*) feature)
+    (when-not (driver-supports? feature)
       (throw (Exception. (str (name feature) " is not supported by this driver."))))))
 
 ;; Expansion Happens in a Few Stages:
