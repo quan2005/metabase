@@ -11,7 +11,7 @@
             [metabase.util.schema :as su]
             [schema.core :as s])
   (:import [metabase.query_processor.interface AgFieldRef BetweenFilter ComparisonFilter CompoundFilter Expression ExpressionRef
-            FieldLiteral FieldPlaceholder RelativeDatetime StringFilter ValuePlaceholder]))
+            FieldLiteral FieldPlaceholder RelativeDatetime StringFilter Value ValuePlaceholder]))
 
 ;;; # ------------------------------------------------------------ Clause Handlers ------------------------------------------------------------
 
@@ -69,11 +69,13 @@
   (i/map->FieldPlaceholder {:fk-field-id fk-field-id, :field-id dest-field-id}))
 
 
-(s/defn ^:private ^:always-validate value :- ValuePlaceholder
+(s/defn ^:private ^:always-validate value :- (s/cond-pre Value ValuePlaceholder)
   "Literal value. F is the `Field` it relates to, and V is `nil`, or a boolean, string, numerical, or datetime value."
   [f v]
   (cond
     (instance? ValuePlaceholder v) v
+    (instance? Value v)            v
+    (instance? FieldLiteral f)     (i/map->Value {:value v, :field f})
     :else                          (i/map->ValuePlaceholder {:field-placeholder (field f), :value v})))
 
 (s/defn ^:private ^:always-validate field-or-value

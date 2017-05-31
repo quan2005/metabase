@@ -135,12 +135,13 @@
   (qualified-name-components [_]
     [nil expression-name]))
 
+(declare AnyFieldOrExpression)
 
 ;; Value is the expansion of a value within a QL clause
 ;; Information about the associated Field is included for convenience
+;; TODO - Value doesn't need the whole field, just the relevant type info / units
 (s/defrecord Value [value   :- (s/maybe (s/cond-pre s/Bool s/Num su/NonBlankString))
-                    field   :- (s/named (s/cond-pre Field ExpressionRef)   ; TODO - Value doesn't need the whole field, just the relevant type info / units
-                                        "field or expression reference")])
+                    field   :- (s/recursive #'AnyFieldOrExpression)])
 
 ;; e.g. an absolute point in time (literal)
 (s/defrecord DateTimeValue [value :- Timestamp
@@ -172,17 +173,16 @@
 ;; Replace Field IDs with these during first pass
 (s/defrecord FieldPlaceholder [field-id      :- su/IntGreaterThanZero
                                fk-field-id   :- (s/maybe (s/constrained su/IntGreaterThanZero
-                                                                        (fn [_] (or (assert-driver-supports :foreign-keys) true))
-                                                                        "foreign-keys is not supported by this driver."))
+                                                                        (fn [_] (or (assert-driver-supports :foreign-keys) true)) ; assert-driver-supports will throw Exception if driver is bound
+                                                                        "foreign-keys is not supported by this driver."))         ; and driver does not support foreign keys
                                datetime-unit :- (s/maybe (apply s/enum datetime-field-units))])
 
 (s/defrecord AgFieldRef [index :- s/Int])
 ;; TODO - add a method to get matching expression from the query?
 
 
-;; TODO - This should probably only allow field aliases, i.e. ones without any path components (e.g. no `table.field`-style values).
-;; TODO - If we extend permissions to allow per-field perms, how do we check this? :/
-;; TODO - Do we even need the FieldType?
+;; TODO - maybe we should figure out some way to have the schema validate that the driver supports field literals, like we do for some of the other clauses.
+;; Ideally we'd do that in a more generic way (perhaps in expand, we could make the clauses specify required feature metadata and have that get checked automatically?)
 (s/defrecord FieldLiteral [field-name :- su/NonBlankString
                            base-type  :- su/FieldType]
   clojure.lang.Named
@@ -190,13 +190,12 @@
 
 (def FieldPlaceholderOrAgRef
   "Schema for either a `FieldPlaceholder`, `FieldLiteral`, or `AgFieldRef`."
-  (s/named (s/cond-pre FieldPlaceholder AgFieldRef FieldLiteral) "Valid field (not a field ID, literal, or aggregate field reference)"))
+  (s/named (s/cond-pre FieldPlaceholder AgFieldRef FieldLiteral) "Valid field (field ID, literal, or aggregate field reference)"))
 
 (def FieldPlaceholderOrExpressionRef
   "Schema for either a `FieldPlaceholder`, `FieldLiteral`, or `ExpressionRef`."
   (s/named (s/cond-pre FieldPlaceholder ExpressionRef FieldLiteral)
            "Valid field or expression reference."))
-
 
 (s/defrecord RelativeDatetime [amount :- s/Int
                                unit   :- DatetimeValueUnit])
@@ -212,9 +211,10 @@
                          custom-name :- (s/maybe su/NonBlankString)])
 
 
+;; TODO - Is `Field` also valid herE?
 (def AnyFieldOrExpression
-  "Schema for a `FieldPlaceholder`, `AgRef`, or `Expression`."
-  (s/named (s/cond-pre ExpressionRef Expression FieldPlaceholderOrAgRef FieldLiteral)
+  "Schema for a anything that is considered a valid 'field': a `FieldPlaceholder`, `AgRef`, `FieldLiteral`, or `Expression`."
+  (s/named (s/cond-pre ExpressionRef Expression FieldPlaceholderOrAgRef)
            "Valid field, ag field reference, expression, expression reference, or field literal."))
 
 
@@ -251,17 +251,15 @@
   "`ValuePlaceholder` schema with the additional constraint that the value be a string/"
   (s/constrained ValuePlaceholder (comp string? :value) ":value must be a string"))
 
-(def FieldOrAnyValue
-  "Schema that accepts either a `FieldPlaceholder` or `ValuePlaceholder`."
-  (s/named (s/cond-pre FieldPlaceholder ValuePlaceholder) "Field or value"))
-
-;; (def FieldOrOrderableValue (s/named (s/cond-pre FieldPlaceholder OrderableValuePlaceholder) "Field or orderable value (number or datetime)"))
-;; (def FieldOrStringValue    (s/named (s/cond-pre FieldPlaceholder StringValuePlaceholder)    "Field or string literal"))
+(def AnyFieldOrValue
+  "Schema that accepts anything normally considered a field (including expressions and literals) *or* a value or value placehoder."
+  (s/named (s/cond-pre AnyFieldOrExpression Value ValuePlaceholder) "Field or value"))
 
 (def RValue
   "Schema for anything that can be an [RValue](https://github.com/metabase/metabase/wiki/Query-Language-'98#rvalues) -
    a `Field`, `Value`, or `Expression`."
-  (s/named (s/cond-pre AnyValue FieldPlaceholderOrExpressionRef Expression)
+  ;; TODO - Not 100% sure this definition makes sense. Why isn't a `Value` allowed here?
+  (s/named (s/cond-pre AnyValue AnyFieldOrExpression)
            "RValue"))
 
 
@@ -292,7 +290,7 @@
 
 (s/defrecord EqualityFilter [filter-type :- (s/enum := :!=)
                              field       :- FieldPlaceholderOrExpressionRef
-                             value       :- FieldOrAnyValue])
+                             value       :- AnyFieldOrValue])
 
 (s/defrecord ComparisonFilter [filter-type :- (s/enum :< :<= :> :>=)
                                field       :- FieldPlaceholderOrExpressionRef

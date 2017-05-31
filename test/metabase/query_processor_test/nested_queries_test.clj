@@ -130,3 +130,20 @@
            :query    {:source-table (str "card__" (u/get-id card))
                       :aggregation  [:count]
                       :breakout     [[:field-literal (keyword (data/format-name :price)) :type/Integer]]}})))))
+
+
+;; make sure we can filter by a field literal
+(expect
+  {:rows [[4 1 10.0646 -165.374 "Red Medicine" 3]]
+   :cols [{:name "category_id", :base_type :type/Integer}
+          {:name "id",          :base_type :type/Integer}
+          {:name "latitude",    :base_type :type/Float}
+          {:name "longitude",   :base_type :type/Float}
+          {:name "name",        :base_type :type/Text}
+          {:name "price",       :base_type :type/Integer}]}
+  (rows+cols
+    (qp/process-query
+      {:database (data/id)
+       :type     :query
+       :query    {:source-query {:source-table (data/id :venues)}
+                  :filter       [:= [:field-literal (data/format-name :id) :type/Integer] 1]}})))
